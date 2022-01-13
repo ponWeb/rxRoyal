@@ -26,6 +26,7 @@ async function bootstrap() {
     whitelist: true,
     stopAtFirstError: true
   }));
+  app.enableCors({ origin: 'https://solasphere.vercel.app/' })
   app.setGlobalPrefix('api')
 
   app.use(
