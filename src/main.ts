@@ -20,6 +20,7 @@ export const sessionMiddleware = session({
   cookie: {
     secure: true,
     sameSite: 'none',
+    domain: 'https://solasphere.vercel.app',
     maxAge: 2 * 86400 * 1000
   }
 })
