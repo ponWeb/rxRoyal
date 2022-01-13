@@ -5,6 +5,7 @@ import * as session from 'express-session'
 import * as connectRedis from 'connect-redis';
 import * as Redis from 'ioredis';
 import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser'
 
 const PORT = process.env.PORT || 5000
 
@@ -26,6 +27,7 @@ async function bootstrap() {
     whitelist: true,
     stopAtFirstError: true
   }));
+  app.use(cookieParser())
   app.enableCors({ origin: 'https://solasphere.vercel.app', credentials: true })
   app.setGlobalPrefix('api')
 
