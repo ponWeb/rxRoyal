@@ -7,7 +7,7 @@ import { TasksService } from './tasks.service';
 export class TaskController {
     constructor(private taskService: TasksService) { }
 
-    @Cron(CronExpression.EVERY_10_SECONDS)
+    @Cron(CronExpression.EVERY_5_SECONDS)
     checkDeposits() {
         this.taskService.checkDeposits()
     }
