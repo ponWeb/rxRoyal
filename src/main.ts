@@ -5,7 +5,7 @@ import * as session from 'express-session'
 import * as connectRedis from 'connect-redis';
 import * as Redis from 'ioredis';
 import { ValidationPipe } from '@nestjs/common';
-import cookieParser from 'cookie-parser'
+import * as cookieParser from 'cookie-parser'
 
 const PORT = process.env.PORT || 5000
 
