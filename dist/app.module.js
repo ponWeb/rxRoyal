@@ -18,11 +18,16 @@ const config_1 = require("@nestjs/config");
 const transaction_module_1 = require("./transaction/transaction.module");
 const game_module_1 = require("./game/game.module");
 const message_module_1 = require("./message/message.module");
+const serve_static_1 = require("@nestjs/serve-static");
+const path_1 = require("path");
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            serve_static_1.ServeStaticModule.forRoot({
+                rootPath: (0, path_1.join)(__dirname, '..', 'clientBuild'),
+            }),
             game_module_1.GameModule,
             auth_module_1.AuthModule,
             user_module_1.UserModule,

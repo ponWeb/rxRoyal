@@ -16,6 +16,6 @@ export declare class UserService {
     findByPublicKey(publicKey: string): Promise<UserDocument | null>;
     verifySignature(publicKey: string, signedMessage: Uint8Array): Promise<boolean>;
     changeBalance(userId: ObjectId, amount: number, notify?: boolean, fromDeposit?: boolean): Promise<void>;
-    getAssociatedKeypair(user: UserDocument): Promise<import("../associatedKeypair/associatedkeypair.schema").AssociatedKeypairDocument>;
+    getAssociatedKeypair(user: UserDocument): Promise<import("../associatedKeypair/associatedKeypair.schema").AssociatedKeypairDocument>;
     requestWithdraw(user: UserDocument, createWithdrawDto: CreateWithdrawDto): Promise<void>;
 }

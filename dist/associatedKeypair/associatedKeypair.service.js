@@ -17,7 +17,7 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const web3_js_1 = require("@solana/web3.js");
 const mongoose_2 = require("mongoose");
-const associatedkeypair_schema_1 = require("./associatedkeypair.schema");
+const associatedKeypair_schema_1 = require("./associatedKeypair.schema");
 let AssociatedKeypairService = class AssociatedKeypairService {
     constructor(associatedKeypairModel) {
         this.associatedKeypairModel = associatedKeypairModel;
@@ -37,7 +37,7 @@ let AssociatedKeypairService = class AssociatedKeypairService {
 };
 AssociatedKeypairService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, mongoose_1.InjectModel)(associatedkeypair_schema_1.AssociatedKeypair.name)),
+    __param(0, (0, mongoose_1.InjectModel)(associatedKeypair_schema_1.AssociatedKeypair.name)),
     __metadata("design:paramtypes", [mongoose_2.Model])
 ], AssociatedKeypairService);
 exports.AssociatedKeypairService = AssociatedKeypairService;

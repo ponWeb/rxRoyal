@@ -12,14 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
-const main_1 = require("../main");
-const sharedSession = require("express-socket.io-session");
 let UserGateway = class UserGateway {
-    afterInit(server) {
-        server.use(sharedSession(main_1.sessionMiddleware));
-        this.server = server;
-        return server;
-    }
     handleConnection(client, ...args) {
     }
     handleSubscribeToProfile(client, _id) {

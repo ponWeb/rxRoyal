@@ -26,4 +26,4 @@ AssociatedKeypair = __decorate([
 ], AssociatedKeypair);
 exports.AssociatedKeypair = AssociatedKeypair;
 exports.AssociatedKeypairSchema = mongoose_1.SchemaFactory.createForClass(AssociatedKeypair);
-//# sourceMappingURL=associatedkeypair.schema.js.map
+//# sourceMappingURL=associatedKeypair.schema.js.map

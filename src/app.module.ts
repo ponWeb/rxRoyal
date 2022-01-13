@@ -9,9 +9,14 @@ import { ConfigModule } from '@nestjs/config';
 import { TransactionModule } from './transaction/transaction.module';
 import { GameModule } from './game/game.module';
 import { MessageModule } from './message/message.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'clientBuild'),
+    }),
     GameModule,
     AuthModule,
     UserModule,

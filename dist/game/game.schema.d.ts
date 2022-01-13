@@ -13,4 +13,4 @@ export declare class Game {
     result: number;
     winner: UserDocument;
 }
-export declare const GameSchema: import("mongoose").Schema<Document<Game, any, any>, import("mongoose").Model<Document<Game, any, any>, any, any, any>, any>;
+export declare const GameSchema: import("mongoose").Schema<Document<Game, any, any>, import("mongoose").Model<Document<Game, any, any>, any, any, any>, any, any>;

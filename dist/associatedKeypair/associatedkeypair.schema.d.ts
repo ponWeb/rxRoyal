@@ -4,4 +4,4 @@ export declare class AssociatedKeypair {
     publicKey: string;
     secretKey: number[];
 }
-export declare const AssociatedKeypairSchema: import("mongoose").Schema<Document<AssociatedKeypair, any, any>, import("mongoose").Model<Document<AssociatedKeypair, any, any>, any, any, any>, any>;
+export declare const AssociatedKeypairSchema: import("mongoose").Schema<Document<AssociatedKeypair, any, any>, import("mongoose").Model<Document<AssociatedKeypair, any, any>, any, any, any>, any, any>;

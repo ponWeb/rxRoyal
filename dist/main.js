@@ -16,7 +16,10 @@ exports.sessionMiddleware = session({
     resave: false,
     saveUninitialized: false,
     store: new RedisStore({ client: redisClient }),
-    cookie: { maxAge: 2 * 86400 * 1000 }
+    cookie: {
+        secure: true,
+        maxAge: 2 * 86400 * 1000
+    }
 });
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
@@ -24,6 +27,7 @@ async function bootstrap() {
         whitelist: true,
         stopAtFirstError: true
     }));
+    app.enableCors({ origin: 'https://solasphere.vercel.app', credentials: true });
     app.setGlobalPrefix('api');
     app.use(exports.sessionMiddleware);
     app.use(passport.initialize());
