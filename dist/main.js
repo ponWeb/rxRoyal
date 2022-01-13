@@ -8,18 +8,17 @@ const session = require("express-session");
 const connectRedis = require("connect-redis");
 const Redis = require("ioredis");
 const common_1 = require("@nestjs/common");
+const cookieParser = require("cookie-parser");
 const PORT = process.env.PORT || 5000;
 const RedisStore = connectRedis(session);
 const redisClient = new Redis(process.env.REDIS_URI, { tls: { rejectUnauthorized: false } });
 exports.sessionMiddleware = session({
     secret: 'keyb',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     store: new RedisStore({ client: redisClient }),
     cookie: {
-        secure: true,
-        maxAge: 2 * 86400 * 1000,
-        domain: 'https://solasphere.herokuapp.com/'
+        maxAge: 2 * 86400 * 1000
     }
 });
 async function bootstrap() {
@@ -28,6 +27,8 @@ async function bootstrap() {
         whitelist: true,
         stopAtFirstError: true
     }));
+    app.enableCors({ credentials: true });
+    app.use(cookieParser());
     app.setGlobalPrefix('api');
     app.use(exports.sessionMiddleware);
     app.use(passport.initialize());

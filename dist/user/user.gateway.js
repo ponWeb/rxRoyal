@@ -23,6 +23,10 @@ let UserGateway = class UserGateway {
     }
 };
 __decorate([
+    (0, websockets_1.WebSocketServer)(),
+    __metadata("design:type", socket_io_1.Server)
+], UserGateway.prototype, "server", void 0);
+__decorate([
     (0, websockets_1.SubscribeMessage)('subscribeToProfile'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [socket_io_1.Socket, String]),

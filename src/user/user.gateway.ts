@@ -5,11 +5,13 @@ import {
     OnGatewayConnection,
     OnGatewayInit,
 } from '@nestjs/websockets';
+
 import { Socket, Server } from 'socket.io';
+import { sessionMiddleware } from 'src/main';
 
 @WebSocketGateway({ namespace: 'user', cors: true })
 export class UserGateway implements OnGatewayConnection {
-    server: Server;
+    @WebSocketServer() server: Server;
 
     handleConnection(client: Socket, ...args: any[]) {
     }
