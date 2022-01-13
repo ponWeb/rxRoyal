@@ -5,6 +5,7 @@ import * as session from 'express-session'
 import * as connectRedis from 'connect-redis';
 import * as Redis from 'ioredis';
 import { ValidationPipe } from '@nestjs/common';
+import * as cookieParser from 'cookie-parser'
 
 const PORT = process.env.PORT || 5000
 
@@ -14,12 +15,10 @@ const redisClient = new Redis(process.env.REDIS_URI, { tls: { rejectUnauthorized
 export const sessionMiddleware = session({
   secret: 'keyb',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true,
   store: new RedisStore({ client: redisClient }),
   cookie: {
-    secure: true,
-    maxAge: 2 * 86400 * 1000,
-    domain: 'https://solasphere.herokuapp.com/'
+    maxAge: 2 * 86400 * 1000
   }
 })
 
@@ -30,6 +29,8 @@ async function bootstrap() {
     whitelist: true,
     stopAtFirstError: true
   }));
+  app.enableCors({ credentials: true })
+  app.use(cookieParser())
   app.setGlobalPrefix('api')
 
   app.use(
