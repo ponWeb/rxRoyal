@@ -17,7 +17,11 @@ export const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   store: new RedisStore({ client: redisClient }),
-  cookie: { maxAge: 2 * 86400 * 1000 }
+  cookie: {
+    secure: true,
+    sameSite: 'none',
+    maxAge: 2 * 86400 * 1000
+  }
 })
 
 async function bootstrap() {
