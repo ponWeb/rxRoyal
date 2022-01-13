@@ -18,7 +18,8 @@ exports.sessionMiddleware = session({
     store: new RedisStore({ client: redisClient }),
     cookie: {
         secure: true,
-        maxAge: 2 * 86400 * 1000
+        maxAge: 2 * 86400 * 1000,
+        domain: 'https://solasphere.herokuapp.com/'
     }
 });
 async function bootstrap() {
@@ -27,7 +28,6 @@ async function bootstrap() {
         whitelist: true,
         stopAtFirstError: true
     }));
-    app.enableCors({ origin: 'https://solasphere.vercel.app', credentials: true });
     app.setGlobalPrefix('api');
     app.use(exports.sessionMiddleware);
     app.use(passport.initialize());
