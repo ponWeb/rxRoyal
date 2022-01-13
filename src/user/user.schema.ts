@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaType, SchemaTypes } from 'mongoose';
-import { AssociatedKeypairDocument } from 'src/associatedKeypair/associatedkeypair.schema';
+import { AssociatedKeypairDocument } from 'src/associatedKeypair/associatedKeypair.schema';
 
 export type UserDocument = User & Document;
 

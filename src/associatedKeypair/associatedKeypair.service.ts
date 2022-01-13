@@ -2,9 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, SystemProgram, Transaction } from "@solana/web3.js";
 import { Model, ObjectId } from "mongoose";
-import { TransactionService } from "src/transaction/transaction.service";
-import * as serviceSecretKey from '../serviceSecretKey.json'
-import { AssociatedKeypairDocument, AssociatedKeypair } from "./associatedkeypair.schema";
+import { AssociatedKeypairDocument, AssociatedKeypair } from "./associatedKeypair.schema";
 
 @Injectable()
 export class AssociatedKeypairService {

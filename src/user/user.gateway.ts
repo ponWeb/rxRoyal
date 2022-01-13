@@ -5,22 +5,11 @@ import {
     OnGatewayConnection,
     OnGatewayInit,
 } from '@nestjs/websockets';
-import { Logger, UseGuards } from '@nestjs/common';
 import { Socket, Server } from 'socket.io';
-import { sessionMiddleware } from 'src/main';
-import { IoAdapter } from '@nestjs/platform-socket.io';
-import { AuthenticatedGuard } from 'src/auth/signedMessage.guard';
-import * as sharedSession from 'express-socket.io-session'
 
 @WebSocketGateway({ namespace: 'user', cors: true })
-export class UserGateway implements OnGatewayConnection, OnGatewayInit {
+export class UserGateway implements OnGatewayConnection {
     server: Server;
-
-    afterInit(server: Server) {
-        server.use(sharedSession(sessionMiddleware))
-        this.server = server
-        return server
-    }
 
     handleConnection(client: Socket, ...args: any[]) {
     }
