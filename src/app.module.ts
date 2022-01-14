@@ -15,7 +15,7 @@ import { join } from 'path';
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'clientBuild'),
+      rootPath: join(__dirname, '..', 'build'),
     }),
     GameModule,
     AuthModule,
