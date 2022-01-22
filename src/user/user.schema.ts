@@ -12,8 +12,8 @@ export class User {
     @Prop({ type: SchemaTypes.ObjectId, required: true, unique: true })
     associatedKeypair: AssociatedKeypairDocument
 
-    @Prop({ type: Date, default: Date.now() - 1000 })
-    lastMessageAt: Date
+    @Prop({ default: Date.now() - 3000 })
+    lastMessageAt: number
 
     @Prop({ default: 0 })
     balance: number;

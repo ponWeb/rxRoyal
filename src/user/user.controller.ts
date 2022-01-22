@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Logger, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthenticatedGuard } from 'src/auth/signedMessage.guard';
-import { PublicKeyParam } from 'src/game/validators/publicKey.param';
 import { CreateWithdrawDto } from './dto/createWithdraw.dto';
+import { PublicKeyDto } from './dto/publicKey.dto';
 import { UserService } from './user.service';
 
 @Controller('u')
@@ -25,7 +25,7 @@ export class UserController {
     }
 
     @Get('/:publicKey')
-    async getUserProfile(@Param() publicKeyParam: PublicKeyParam) {
+    async getUserProfile(@Param() publicKeyParam: PublicKeyDto) {
         return await this.userService.findByPublicKey(publicKeyParam.publicKey)
     }
 }

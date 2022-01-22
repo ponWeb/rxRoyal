@@ -2,11 +2,11 @@ import { Body, Controller, Get, HttpCode, Param, Post, Req, UseGuards } from '@n
 import { ObjectId } from 'mongoose';
 import { AuthenticatedGuard } from 'src/auth/signedMessage.guard';
 import { UserService } from 'src/user/user.service';
-import { GameIdBody } from './validators/gameId.body';
 import { CreateGameDto } from './dto/createGame.dto';
 import { GameDocument } from './game.schema';
 import { GameService } from './game.serivce';
-import { PublicKeyParam } from './validators/publicKey.param';
+import { GameIdDto } from './dto/gameId.dto';
+import { PublicKeyDto } from 'src/user/dto/publicKey.dto';
 
 @Controller('game')
 export class GameController {
@@ -21,14 +21,14 @@ export class GameController {
 
     @UseGuards(AuthenticatedGuard)
     @Post('/join')
-    async joinGame(@Req() req, @Body() gameIdBody: GameIdBody) {
-        await this.gameService.join(gameIdBody.gameId, req.user)
+    async joinGame(@Req() req, @Body() gameIdBody: GameIdDto) {
+        await this.gameService.join(gameIdBody, req.user)
     }
 
     @UseGuards(AuthenticatedGuard)
     @Post('/cancel')
-    async cancelGame(@Req() req, @Body() gameIdBody: GameIdBody) {
-        await this.gameService.cancel(gameIdBody.gameId, req.user)
+    async cancelGame(@Req() req, @Body() gameIdBody: GameIdDto) {
+        await this.gameService.cancel(gameIdBody, req.user)
     }
 
     @Get('/allActive')
@@ -42,7 +42,7 @@ export class GameController {
     }
 
     @Get('/u/:publicKey')
-    async getUserGames(@Param() publicKeyParam: PublicKeyParam): Promise<GameDocument[]> {
+    async getUserGames(@Param() publicKeyParam: PublicKeyDto): Promise<GameDocument[]> {
         return await this.gameService.findByUserPublicKey(publicKeyParam.publicKey)
     }
 }

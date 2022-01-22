@@ -9,6 +9,7 @@ import { GameGateway } from "./game.gateway";
 import { Game, GameDocument } from "./game.schema";
 import { createHash } from "crypto";
 import csprng from "src/utils/csprng";
+import { GameIdDto } from "./dto/gameId.dto";
 
 const connection = new Connection(
     clusterApiUrl('mainnet-beta'),
@@ -26,7 +27,7 @@ export class GameService {
 
         const newGame = new this.gameModel(createGameDto)
         newGame.creator = user
-        newGame.privateSeed = csprng(160, 36)
+        newGame.privateSeed = csprng(160, 16)
         newGame.privateSeedHash = createHash('sha256').update(newGame.privateSeed).digest('hex')
 
         await Promise.all([
@@ -36,8 +37,8 @@ export class GameService {
         this.gameGateway.newGameNotify(newGame)
     }
 
-    async join(gameId: Types.ObjectId, user: UserDocument) {
-        const game = await this.findById(gameId)
+    async join(gameIdDto: GameIdDto, user: UserDocument) {
+        const game = await this.findById(gameIdDto.gameId)
 
         if (!game) throw new HttpException('Game does not exists', HttpStatus.FORBIDDEN)
         if (game.status !== 'active') throw new HttpException('You can join only active games', HttpStatus.FORBIDDEN)
@@ -73,14 +74,14 @@ export class GameService {
         game.status = 'ended'
 
         await Promise.all([
-            this.userService.changeBalance(winner._id, game.amount * 2, false),
+            this.userService.changeBalance(winner._id, Math.round(game.amount * 2 * ((100 - game.fee) / 100)), false),
             game.save()
         ])
         this.gameGateway.gameUpdateNotify(game)
     }
 
-    async cancel(gameId: Types.ObjectId, user: UserDocument) {
-        const game = await this.findById(gameId)
+    async cancel(gameIdDto: GameIdDto, user: UserDocument) {
+        const game = await this.findById(gameIdDto.gameId)
         if (!game) throw new HttpException('Game does not exists', HttpStatus.FORBIDDEN)
 
         if (!user._id.equals(game.creator._id)) throw new HttpException('You can not cancel another person`s game', HttpStatus.FORBIDDEN)
@@ -99,7 +100,12 @@ export class GameService {
     }
 
     async findByUserId(userId: Types.ObjectId) {
-        const games = await this.gameModel.find({ $or: [{ creator: userId }, { opponent: userId }] }).populate('creator opponent winner').sort({ createdAt: -1 }).select('+privateSeed').exec()
+        const games = await this.gameModel.find({ $or: [{ creator: userId }, { opponent: userId }] })
+
+            .populate('creator opponent winner')
+            .sort({ createdAt: -1 })
+            .select('+privateSeed').exec()
+
         games.forEach(game => game.privateSeed = game.status === 'active' ? '-' : game.privateSeed)
 
         return games
@@ -118,6 +124,6 @@ export class GameService {
     }
 
     async getLastEnded(): Promise<GameDocument[]> {
-        return this.gameModel.find({ status: 'ended' }).populate('creator opponent winner').sort({ createdAt: -1 }).limit(LAST_GAMES_TO_SHOW)
+        return this.gameModel.find({ status: 'ended' }).select('+privateSeed').populate('creator opponent winner').sort({ createdAt: -1 }).limit(LAST_GAMES_TO_SHOW)
     }
 }

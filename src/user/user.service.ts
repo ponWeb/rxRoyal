@@ -43,6 +43,10 @@ export class UserService {
         notify ? this.userGateway.balanceChangeNotify(userId, amount, fromDeposit) : null
     }
 
+    async updateLastMessage(userId: ObjectId) {
+        await this.userModel.updateOne({ _id: userId }, { lastMessageAt: Date.now() })
+    }
+
     async getAssociatedKeypair(user: UserDocument) {
         return this.associatedKeypairService.findById(user.associatedKeypair._id, true)
     }

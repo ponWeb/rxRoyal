@@ -18,6 +18,9 @@ export class Game {
     @Prop({ required: true, enum: [0, 1] })
     creatorChoice: number
 
+    @Prop({ default: 3 })
+    fee: number
+
     @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
     opponent: UserDocument
 
