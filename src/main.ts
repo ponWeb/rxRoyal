@@ -6,6 +6,7 @@ import * as connectRedis from 'connect-redis';
 import * as Redis from 'ioredis';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser'
+import sslRedirect from 'heroku-ssl-redirect'
 
 const PORT = process.env.PORT || 5000
 
@@ -31,6 +32,7 @@ async function bootstrap() {
   }));
   app.enableCors({ credentials: true })
   app.use(cookieParser())
+  app.use(sslRedirect())
   app.setGlobalPrefix('api')
 
   app.use(
