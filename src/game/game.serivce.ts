@@ -58,7 +58,7 @@ export class GameService {
     }
 
     async pickWinner(game: GameDocument) {
-        const [{ blockhash }, privateSeed] = await Promise.all([
+        const [{ blockhash }, { privateSeed }] = await Promise.all([
             connection.getRecentBlockhash(),
             this.gameModel.findById(game._id).select('privateSeed')
         ])
