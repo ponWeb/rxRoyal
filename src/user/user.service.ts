@@ -10,7 +10,7 @@ import { AssociatedKeypairService } from 'src/associatedKeypair/associatedKeypai
 import { TransactionService } from 'src/transaction/transaction.service';
 import { CreateWithdrawDto } from './dto/createWithdraw.dto';
 
-const messageToSign = Uint8Array.from(Buffer.from('I agree with Terms & Services of CookiMania.'))
+const messageToSign = Uint8Array.from(Buffer.from('I agree with Terms & Services of solasphere'))
 
 @Injectable()
 export class UserService {
