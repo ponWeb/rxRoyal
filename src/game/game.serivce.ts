@@ -100,7 +100,7 @@ export class GameService {
     }
 
     async findByUserId(userId: Types.ObjectId) {
-        const games = await this.gameModel.find({ $or: [{ creator: userId }, { opponent: userId }] })
+        const games = await this.gameModel.find({ $or: [{ creator: userId }, { opponent: userId }], status: 'ended' })
 
             .populate('creator opponent winner')
             .sort({ createdAt: -1 })
