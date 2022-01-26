@@ -8,7 +8,7 @@ import { Transaction as SolanaTransaction } from '@solana/web3.js'
 import * as serviceSecretKey from '../serviceSecretKey.json'
 
 const connection = new Connection(
-    clusterApiUrl('devnet'),
+    clusterApiUrl('testnet'),
     'confirmed',
 );
 const serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(serviceSecretKey))
