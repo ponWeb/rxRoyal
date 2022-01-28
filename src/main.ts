@@ -27,7 +27,9 @@ async function bootstrap() {
     saveUninitialized: true,
     store: new RedisStore({ client: redisClient }),
     cookie: {
-      maxAge: 2 * 86400 * 1000
+      maxAge: 2 * 86400 * 1000,
+      secure: true,
+      httpOnly: true
     }
   })
 
