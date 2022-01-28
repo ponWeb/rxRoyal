@@ -34,7 +34,11 @@ async function bootstrap() {
   })
 
   app.use(helmet({
-    contentSecurityPolicy: false
+    contentSecurityPolicy: {
+      directives: {
+        scriptSrc: ["'self'", "'unsafe-inline'"]
+      }
+    },
   }))
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
