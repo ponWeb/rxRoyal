@@ -38,7 +38,8 @@ async function bootstrap() {
       directives: {
         scriptSrc: ["'self'", "'unsafe-inline'"]
       }
-    }
+    },
+    xssFilter: false
   }))
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
