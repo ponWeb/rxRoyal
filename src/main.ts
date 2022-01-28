@@ -27,13 +27,13 @@ async function bootstrap() {
     saveUninitialized: true,
     store: new RedisStore({ client: redisClient }),
     cookie: {
-      maxAge: 2 * 86400 * 1000,
-      secure: true,
-      httpOnly: true
+      maxAge: 2 * 86400 * 1000
     }
   })
 
-  app.use(helmet())
+  app.use(helmet({
+    contentSecurityPolicy: false
+  }))
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     stopAtFirstError: true
