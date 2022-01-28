@@ -1,35 +1,39 @@
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Connection, Keypair, ParsedConfirmedTransaction, clusterApiUrl, ConfirmedSignatureInfo, PublicKey, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
+import { Connection, Keypair, ParsedConfirmedTransaction, clusterApiUrl, ConfirmedSignatureInfo, PublicKey, LAMPORTS_PER_SOL, SystemProgram, Cluster } from "@solana/web3.js";
 import { Model } from "mongoose";
 import { UserService } from "src/user/user.service";
 import { Transaction, TransactionDocument } from "./transaction.schema";
 import { Transaction as SolanaTransaction } from '@solana/web3.js'
-import * as serviceSecretKey from '../serviceSecretKey.json'
-
-const connection = new Connection(
-    clusterApiUrl('testnet'),
-    'confirmed',
-);
-const serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(serviceSecretKey))
-
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class TransactionService {
-    constructor(@InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>, @Inject(forwardRef(() => UserService)) private userService: UserService) { }
+    network: Cluster
+    serviceKeypair: Keypair
+    connection: Connection
+
+    constructor(@InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>, @Inject(forwardRef(() => UserService)) private userService: UserService, private configService: ConfigService) {
+        this.network = 'testnet' as Cluster
+        this.connection = new Connection(
+            clusterApiUrl(this.network),
+            'confirmed',
+        );
+        this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))
+    }
 
 
     async sendLamportsFromServer(receiverPublicKey: string, amount: number) {
         try {
             const tx = new SolanaTransaction().add(
                 SystemProgram.transfer({
-                    fromPubkey: serviceKeypair.publicKey,
+                    fromPubkey: this.serviceKeypair.publicKey,
                     toPubkey: new PublicKey(receiverPublicKey),
                     lamports: amount
                 })
             )
 
-            await connection.sendTransaction(tx, [serviceKeypair])
+            await this.connection.sendTransaction(tx, [this.serviceKeypair])
         } catch (e) {
             Logger.log(e)
             throw new HttpException('Server Withdraw Error. Try again later', HttpStatus.INTERNAL_SERVER_ERROR)
@@ -37,7 +41,7 @@ export class TransactionService {
     }
 
     async getBySignatureFromBlockchain(signature: string): Promise<ParsedConfirmedTransaction> {
-        const transaction = await connection.getParsedConfirmedTransaction(signature)
+        const transaction = await this.connection.getParsedConfirmedTransaction(signature)
 
         return transaction
     }
@@ -45,9 +49,9 @@ export class TransactionService {
     getType(transaction: ParsedConfirmedTransaction): string {
         //@ts-ignore
         const { destination, source } = transaction.transaction.message.instructions[0].parsed.info
-        if (destination === serviceKeypair.publicKey.toString()) {
+        if (destination === this.serviceKeypair.publicKey.toString()) {
             return 'deposit'
-        } else if (source === serviceKeypair.publicKey.toString()) {
+        } else if (source === this.serviceKeypair.publicKey.toString()) {
             return 'withdraw'
         }
     }
@@ -63,7 +67,7 @@ export class TransactionService {
     }
 
     async getManyFromBlockchain(): Promise<ConfirmedSignatureInfo[]> {
-        const transactions = await connection.getSignaturesForAddress(serviceKeypair.publicKey)
+        const transactions = await this.connection.getSignaturesForAddress(this.serviceKeypair.publicKey)
 
         return transactions
     }

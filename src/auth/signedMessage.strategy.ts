@@ -1,4 +1,4 @@
-import { Body, Injectable, Logger, Req, UnauthorizedException } from "@nestjs/common";
+import { Injectable, Req } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { PublicKey } from "@solana/web3.js";
 import { Strategy } from "passport-custom"

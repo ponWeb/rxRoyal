@@ -6,26 +6,34 @@ import * as connectRedis from 'connect-redis';
 import * as Redis from 'ioredis';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser'
+import helmet from 'helmet'
 import sslRedirect from 'heroku-ssl-redirect'
-
-const PORT = process.env.PORT || 5000
-
-const RedisStore = connectRedis(session)
-const redisClient = new Redis(process.env.REDIS_URI, { tls: { rejectUnauthorized: false } })
-
-export const sessionMiddleware = session({
-  secret: 'keyb',
-  resave: false,
-  saveUninitialized: true,
-  store: new RedisStore({ client: redisClient }),
-  cookie: {
-    maxAge: 2 * 86400 * 1000
-  }
-})
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const config = app.get(ConfigService)
+
+  const PORT = config.get('PORT') || 5000
+
+  const RedisStore = connectRedis(session)
+  const redisUrl = config.get('REDIS_URI')
+  const redisClient = new Redis(redisUrl, { tls: { rejectUnauthorized: false } })
+
+  const sessionMiddleware = session({
+    secret: config.get('SESSION_SECRET'),
+    resave: false,
+    saveUninitialized: true,
+    store: new RedisStore({ client: redisClient }),
+    cookie: {
+      maxAge: 2 * 86400 * 1000,
+      secure: true,
+      httpOnly: true
+    }
+  })
+
+  app.use(helmet())
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     stopAtFirstError: true
