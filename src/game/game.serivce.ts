@@ -75,6 +75,7 @@ export class GameService {
         game.result = result
         game.blockhash = blockhash
         game.status = 'ended'
+        game.endedAt = Date.now()
 
         await Promise.all([
             this.userService.changeBalance(winner._id, Math.round(game.amount * 2 * ((100 - game.fee) / 100)), false),
@@ -106,7 +107,7 @@ export class GameService {
         const games = await this.gameModel.find({ $or: [{ creator: userId }, { opponent: userId }], status: 'ended' })
 
             .populate('creator opponent winner')
-            .sort({ createdAt: -1 })
+            .sort({ updatedAt: -1 })
             .select('+privateSeed').exec()
 
         games.forEach(game => game.privateSeed = game.status === 'active' ? '-' : game.privateSeed)
@@ -127,7 +128,7 @@ export class GameService {
     }
 
     async getLastEnded(): Promise<GameDocument[]> {
-        return this.gameModel.find({ status: 'ended' }).select('+privateSeed').populate('creator opponent winner').sort({ createdAt: -1 }).limit(LAST_GAMES_TO_SHOW)
+        return this.gameModel.find({ status: 'ended' }).select('+privateSeed').populate('creator opponent winner').sort({ updatedAt: -1 }).limit(LAST_GAMES_TO_SHOW)
     }
 
     async userActiveCount(userId: ObjectId): Promise<number> {

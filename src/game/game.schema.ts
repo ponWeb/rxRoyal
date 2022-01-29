@@ -38,6 +38,9 @@ export class Game {
 
     @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
     winner: UserDocument
+
+    @Prop()
+    endedAt: number
 }
 
 export const GameSchema = SchemaFactory.createForClass(Game)
