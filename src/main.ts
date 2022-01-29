@@ -35,6 +35,7 @@ async function bootstrap() {
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
+        connectSrc: ["'self'", `api.${config.get('SOLANA_NETWORK')}.solana.com`],
         scriptSrc: ["'self'", "'unsafe-inline'"]
       }
     }

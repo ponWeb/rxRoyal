@@ -14,7 +14,7 @@ export class TransactionService {
     connection: Connection
 
     constructor(@InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>, @Inject(forwardRef(() => UserService)) private userService: UserService, private configService: ConfigService) {
-        this.network = 'testnet' as Cluster
+        this.network = this.configService.get('SOLANA_NETWORK') as Cluster
         this.connection = new Connection(
             clusterApiUrl(this.network),
             'confirmed',
