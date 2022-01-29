@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Connection, clusterApiUrl } from '@solana/web3.js';
-import { Model, Types } from "mongoose";
+import { Model, ObjectId, Types } from "mongoose";
 import { User, UserDocument } from "src/user/user.schema";
 import { UserService } from "src/user/user.service";
 import { CreateGameDto } from "./dto/createGame.dto";
@@ -24,6 +24,9 @@ export class GameService {
 
     async create(user: UserDocument, createGameDto: CreateGameDto) {
         if (user.balance < createGameDto.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
+        const userActiveCount = await this.userActiveCount(user._id)
+
+        if (!(userActiveCount < 5)) throw new HttpException("You can't have more than 5 active games", HttpStatus.FORBIDDEN)
 
         const newGame = new this.gameModel(createGameDto)
         newGame.creator = user
@@ -125,5 +128,9 @@ export class GameService {
 
     async getLastEnded(): Promise<GameDocument[]> {
         return this.gameModel.find({ status: 'ended' }).select('+privateSeed').populate('creator opponent winner').sort({ createdAt: -1 }).limit(LAST_GAMES_TO_SHOW)
+    }
+
+    async userActiveCount(userId: ObjectId): Promise<number> {
+        return this.gameModel.count({ creator: userId, status: 'active' })
     }
 }
