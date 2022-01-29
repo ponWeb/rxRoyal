@@ -24,12 +24,11 @@ async function bootstrap() {
   const sessionMiddleware = session({
     secret: config.get('SESSION_SECRET'),
     resave: false,
+    rolling: true,
     saveUninitialized: true,
     store: new RedisStore({ client: redisClient }),
     cookie: {
-      maxAge: 2 * 86400 * 1000,
-      secure: true,
-      httpOnly: true
+      maxAge: 2 * 86400 * 1000
     }
   })
 
