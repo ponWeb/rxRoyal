@@ -9,6 +9,7 @@ import { UserGateway } from './user.gateway';
 import { AssociatedKeypairService } from 'src/associatedKeypair/associatedKeypair.service';
 import { TransactionService } from 'src/transaction/transaction.service';
 import { CreateWithdrawDto } from './dto/createWithdraw.dto';
+import { EditUserDto } from './dto/editUserDto';
 
 const messageToSign = Uint8Array.from(Buffer.from('I agree with Terms & Services of solasphere'))
 
@@ -21,6 +22,17 @@ export class UserService {
         const createdUser = new this.userModel({ ...createUserDto, associatedKeypair: associatedKeypairId })
 
         return createdUser.save()
+    }
+
+    async editUserData(user: UserDocument, editUserDto: EditUserDto) {
+        const { username } = editUserDto
+        if (username && user.username !== username) {
+            const userWithSameUsername = await this.userModel.findOne({ username })
+            if (userWithSameUsername) throw new HttpException('Username is already taken', HttpStatus.FORBIDDEN)
+            user.username = username
+        }
+        await user.save()
+        return user
     }
 
     async findById(userId: ObjectId): Promise<UserDocument | null> {

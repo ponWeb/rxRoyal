@@ -9,6 +9,9 @@ export class User {
     @Prop({ required: true, unique: true })
     publicKey: string;
 
+    @Prop({ unique: true })
+    username: string;
+
     @Prop({ type: SchemaTypes.ObjectId, required: true, unique: true })
     associatedKeypair: AssociatedKeypairDocument
 

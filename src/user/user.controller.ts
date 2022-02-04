@@ -2,12 +2,20 @@ import { Body, Controller, Get, Logger, Param, Post, Req, UseGuards } from '@nes
 import { AuthenticatedGuard } from 'src/auth/signedMessage.guard';
 import { CreateWithdrawDto } from './dto/createWithdraw.dto';
 import { PublicKeyDto } from './dto/publicKey.dto';
+import { EditUserDto } from './dto/editUserDto';
 import { UserService } from './user.service';
 
 @Controller('u')
 export class UserController {
     constructor(private userService: UserService) { }
 
+    @UseGuards(AuthenticatedGuard)
+    @Post('/editUser')
+    async editUser(@Req() req, @Body() editUserDto: EditUserDto) {
+        const { user } = req
+
+        return await this.userService.editUserData(user, editUserDto)
+    }
     @UseGuards(AuthenticatedGuard)
     @Get('/associatedKeypair')
     async getAssociatedKeypair(@Req() req) {
