@@ -26,8 +26,12 @@ export class UserService {
 
     async editUserData(user: UserDocument, editUserDto: EditUserDto) {
         const { username } = editUserDto
-        if (username && user.username !== username) {
-            const userWithSameUsername = await this.userModel.findOne({ username })
+        const usernameLowerCase = username.toLowerCase()
+
+        Logger.log('here!')
+        if (username && user.usernameLowerCase !== usernameLowerCase) {
+            Logger.log(usernameLowerCase)
+            const userWithSameUsername = await this.userModel.findOne({ usernameLowerCase })
             if (userWithSameUsername) throw new HttpException('Username is already taken', HttpStatus.FORBIDDEN)
             user.username = username
         }
