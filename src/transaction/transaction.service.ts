@@ -92,13 +92,18 @@ export class TransactionService {
         const newTransaction = new this.transactionModel({ signature: transaction.transaction.signatures[0] })
 
         await newTransaction.save()
-
     }
 
     async confirmMany(transactions: ConfirmedSignatureInfo[]) {
         for (let tr of transactions) {
             const transaction = await this.getBySignatureFromBlockchain(tr.signature)
             const transactionType = this.getType(transaction)
+
+            try {
+                await this.saveTransactionToDb(transaction)
+            } catch (e) {
+                return
+            }
 
             if (transactionType === 'deposit') {
                 const sender = this.getSender(transaction)
@@ -107,10 +112,8 @@ export class TransactionService {
                 const user = await this.userService.findByPublicKey(sender.toString())
                 if (!user) return
 
-                await this.userService.changeBalance(user._id, amount, true, true)
+                this.userService.changeBalance(user._id, amount, true, true)
             }
-
-            await this.saveTransactionToDb(transaction)
         }
     }
 

@@ -9,6 +9,8 @@ export class TasksService {
     async checkDeposits() {
         const unConfirmedTransactions = await this.transactionService.getUnconfirmed()
 
+        Logger.log(`Unconfirmed transactions: ${unConfirmedTransactions.length}`)
+
         if (unConfirmedTransactions.length > 0) await this.transactionService.confirmMany(unConfirmedTransactions)
     }
 }
