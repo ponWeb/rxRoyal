@@ -33,6 +33,7 @@ UserSchema.pre<UserDocument>('save', function (next) {
     if (this.username) {
         this.usernameLowerCase = this.username.toLowerCase()
     }
+    this.increment();
 
     next();
 });
