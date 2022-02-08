@@ -41,9 +41,11 @@ export class TransactionService {
     }
 
     async getBySignatureFromBlockchain(signature: string): Promise<ParsedConfirmedTransaction> {
-        const transaction = await this.connection.getParsedConfirmedTransaction(signature)
+        return await this.connection.getParsedConfirmedTransaction(signature)
+    }
 
-        return transaction
+    async getBySignature(signature: string) {
+        return await this.transactionModel.findOne({ signature })
     }
 
     getType(transaction: ParsedConfirmedTransaction): string {
@@ -96,13 +98,18 @@ export class TransactionService {
 
     async confirmMany(transactions: ConfirmedSignatureInfo[]) {
         for (let tr of transactions) {
+            const transactionWithSameSignature = await this.getBySignature(tr.signature)
+            console.log({ transactionWithSameSignature })
+            if (transactionWithSameSignature) continue
+
             const transaction = await this.getBySignatureFromBlockchain(tr.signature)
             const transactionType = this.getType(transaction)
+
 
             try {
                 await this.saveTransactionToDb(transaction)
             } catch (e) {
-                return
+                continue
             }
 
             if (transactionType === 'deposit') {
