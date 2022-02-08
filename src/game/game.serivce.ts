@@ -23,7 +23,7 @@ export class GameService {
     constructor(@InjectModel(Game.name) private gameModel: Model<GameDocument>, private userService: UserService, private gameGateway: GameGateway) { }
 
     async create(user: UserDocument, createGameDto: CreateGameDto) {
-        if (await this.userService.getUserBalance(user._id) < createGameDto.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
+        if (user.balance < createGameDto.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
         const userActiveCount = await this.userActiveCount(user._id)
 
         if (!(userActiveCount < 5)) throw new HttpException("You can't have more than 5 active games", HttpStatus.FORBIDDEN)
@@ -33,10 +33,12 @@ export class GameService {
         newGame.privateSeed = csprng(160, 16)
         newGame.privateSeedHash = createHash('sha256').update(newGame.privateSeed).digest('hex')
 
-        await Promise.all([
-            this.userService.changeBalance(user._id, -createGameDto.amount),
-            newGame.save()
-        ])
+        try {
+            await this.userService.changeBalance(user, -createGameDto.amount)
+        } catch (e) {
+            throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
+        }
+        await newGame.save()
         this.gameGateway.newGameNotify(newGame)
     }
 
@@ -46,14 +48,14 @@ export class GameService {
         if (!game) throw new HttpException('Game does not exists', HttpStatus.FORBIDDEN)
         if (game.status !== 'active') throw new HttpException('You can join only active games', HttpStatus.FORBIDDEN)
 
-        if (await this.userService.getUserBalance(user._id) < game.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
+        if (user.balance < game.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
         if (user._id.equals(game.creator._id)) throw new HttpException('You can not join your own game', HttpStatus.FORBIDDEN)
 
         game.opponent = user
         game.status = 'joined'
 
         await Promise.all([
-            this.userService.changeBalance(user._id, -game.amount),
+            this.userService.changeBalance(user, -game.amount),
             game.save()
         ])
         this.gameGateway.gameUpdateNotify(game)
@@ -78,7 +80,7 @@ export class GameService {
         game.endedAt = Date.now()
 
         await Promise.all([
-            this.userService.changeBalance(winner._id, Math.round(game.amount * 2 * ((100 - game.fee) / 100)), false),
+            this.userService.changeBalance(winner, Math.round(game.amount * 2 * ((100 - game.fee) / 100)), false),
             game.save()
         ])
         this.gameGateway.gameUpdateNotify(game)
@@ -93,7 +95,7 @@ export class GameService {
 
         game.status = 'cancelled'
         await Promise.all([
-            this.userService.changeBalance(game.creator._id, game.amount),
+            this.userService.changeBalance(game.creator, game.amount),
             game.save()
         ])
         this.gameGateway.gameUpdateNotify(game)

@@ -26,8 +26,12 @@ export class UserService {
 
     async editUserData(user: UserDocument, editUserDto: EditUserDto) {
         const { username } = editUserDto
-        if (username && user.username !== username) {
-            const userWithSameUsername = await this.userModel.findOne({ username })
+        const usernameLowerCase = username.toLowerCase()
+
+        Logger.log('here!')
+        if (username && user.usernameLowerCase !== usernameLowerCase) {
+            Logger.log(usernameLowerCase)
+            const userWithSameUsername = await this.userModel.findOne({ usernameLowerCase })
             if (userWithSameUsername) throw new HttpException('Username is already taken', HttpStatus.FORBIDDEN)
             user.username = username
         }
@@ -50,14 +54,10 @@ export class UserService {
         return isVerified
     }
 
-    async getUserBalance(userId: ObjectId) {
-        const { balance } = await this.userModel.findById(userId).select('balance')
-        return balance
-    }
-
-    async changeBalance(userId: ObjectId, amount: number, notify: boolean = true, fromDeposit = false) {
-        await this.userModel.updateOne({ _id: userId }, { $inc: { balance: amount } }).exec()
-        notify ? this.userGateway.balanceChangeNotify(userId, amount, fromDeposit) : null
+    async changeBalance(user: UserDocument, amount: number, notify: boolean = true, fromDeposit = false, versionKey = false) {
+        user.balance += amount
+        await user.save()
+        notify ? this.userGateway.balanceChangeNotify(user._id, amount, fromDeposit) : null
     }
 
     async updateLastMessage(userId: ObjectId) {
@@ -71,11 +71,11 @@ export class UserService {
     async requestWithdraw(user: UserDocument, createWithdrawDto: CreateWithdrawDto) {
         const { amount } = createWithdrawDto
 
-        if (await this.getUserBalance(user._id) < amount) throw new HttpException('Balance needs to be higher than the withdraw amount', HttpStatus.FORBIDDEN)
+        if (user.balance < amount) throw new HttpException('Balance needs to be higher than the withdraw amount', HttpStatus.FORBIDDEN)
 
         const [associatedKeypair] = await Promise.all([
             this.associatedKeypairService.findById(user.associatedKeypair._id),
-            this.changeBalance(user._id, -amount, false)
+            this.changeBalance(user, -amount, false)
         ])
 
         await this.transactionService.sendLamportsFromServer(associatedKeypair.publicKey, amount)
