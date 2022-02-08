@@ -50,6 +50,11 @@ export class UserService {
         return isVerified
     }
 
+    async getUserBalance(userId: ObjectId) {
+        const { balance } = await this.userModel.findById(userId).select('balance')
+        return balance
+    }
+
     async changeBalance(userId: ObjectId, amount: number, notify: boolean = true, fromDeposit = false) {
         await this.userModel.updateOne({ _id: userId }, { $inc: { balance: amount } }).exec()
         notify ? this.userGateway.balanceChangeNotify(userId, amount, fromDeposit) : null
@@ -66,7 +71,7 @@ export class UserService {
     async requestWithdraw(user: UserDocument, createWithdrawDto: CreateWithdrawDto) {
         const { amount } = createWithdrawDto
 
-        if (user.balance < amount) throw new HttpException('Balance needs to be higher than the withdraw amount', HttpStatus.FORBIDDEN)
+        if (await this.getUserBalance(user._id) < amount) throw new HttpException('Balance needs to be higher than the withdraw amount', HttpStatus.FORBIDDEN)
 
         const [associatedKeypair] = await Promise.all([
             this.associatedKeypairService.findById(user.associatedKeypair._id),

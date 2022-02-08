@@ -23,7 +23,7 @@ export class GameService {
     constructor(@InjectModel(Game.name) private gameModel: Model<GameDocument>, private userService: UserService, private gameGateway: GameGateway) { }
 
     async create(user: UserDocument, createGameDto: CreateGameDto) {
-        if (user.balance < createGameDto.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
+        if (await this.userService.getUserBalance(user._id) < createGameDto.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
         const userActiveCount = await this.userActiveCount(user._id)
 
         if (!(userActiveCount < 5)) throw new HttpException("You can't have more than 5 active games", HttpStatus.FORBIDDEN)
@@ -46,7 +46,7 @@ export class GameService {
         if (!game) throw new HttpException('Game does not exists', HttpStatus.FORBIDDEN)
         if (game.status !== 'active') throw new HttpException('You can join only active games', HttpStatus.FORBIDDEN)
 
-        if (user.balance < game.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
+        if (await this.userService.getUserBalance(user._id) < game.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
         if (user._id.equals(game.creator._id)) throw new HttpException('You can not join your own game', HttpStatus.FORBIDDEN)
 
         game.opponent = user
