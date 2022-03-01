@@ -7,6 +7,7 @@ import { GameDocument } from './game.schema';
 import { GameService } from './game.serivce';
 import { GameIdDto } from './dto/gameId.dto';
 import { PublicKeyDto } from 'src/user/dto/publicKey.dto';
+import { JoinGameDto } from './dto/joinGame.dto';
 
 @Controller('game')
 export class GameController {
@@ -21,8 +22,8 @@ export class GameController {
 
     @UseGuards(AuthenticatedGuard)
     @Post('/join')
-    async joinGame(@Req() req, @Body() gameIdBody: GameIdDto) {
-        await this.gameService.join(gameIdBody, req.user)
+    async joinGame(@Req() req, @Body() joinGameDto: JoinGameDto) {
+        await this.gameService.join(joinGameDto, req.user)
     }
 
     @UseGuards(AuthenticatedGuard)
@@ -36,7 +37,7 @@ export class GameController {
         return await this.gameService.getActive()
     }
 
-    @Get('/lastEnded')
+    @Get('/recentGames')
     async getLastEnded(): Promise<GameDocument[]> {
         return await this.gameService.getLastEnded()
     }

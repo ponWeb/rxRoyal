@@ -9,6 +9,6 @@ export class TaskController {
 
     @Cron(CronExpression.EVERY_5_SECONDS)
     checkDeposits() {
-        this.taskService.checkDeposits()
+        this.taskService.processTransactions()
     }
 }

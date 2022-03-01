@@ -10,6 +10,7 @@ import { Game, GameDocument } from "./game.schema";
 import { createHash } from "crypto";
 import csprng from "src/utils/csprng";
 import { GameIdDto } from "./dto/gameId.dto";
+import { JoinGameDto } from "./dto/joinGame.dto";
 
 const connection = new Connection(
     clusterApiUrl('mainnet-beta'),
@@ -30,8 +31,7 @@ export class GameService {
 
         const newGame = new this.gameModel(createGameDto)
         newGame.creator = user
-        newGame.privateSeed = csprng(160, 16)
-        newGame.privateSeedHash = createHash('sha256').update(newGame.privateSeed).digest('hex')
+        newGame.creatorMove = createGameDto.creatorMove
 
         try {
             await this.userService.changeBalance(user, -createGameDto.amount)
@@ -42,8 +42,8 @@ export class GameService {
         this.gameGateway.newGameNotify(newGame)
     }
 
-    async join(gameIdDto: GameIdDto, user: UserDocument) {
-        const game = await this.findById(gameIdDto.gameId)
+    async join(joinGameDto: JoinGameDto, user: UserDocument) {
+        const game = await this.findById(joinGameDto.gameId)
 
         if (!game) throw new HttpException('Game does not exists', HttpStatus.FORBIDDEN)
         if (game.status !== 'active') throw new HttpException('You can join only active games', HttpStatus.FORBIDDEN)
@@ -52,6 +52,7 @@ export class GameService {
         if (user._id.equals(game.creator._id)) throw new HttpException('You can not join your own game', HttpStatus.FORBIDDEN)
 
         game.opponent = user
+        game.opponentMove = joinGameDto.move
         game.status = 'joined'
 
         await Promise.all([
@@ -63,26 +64,33 @@ export class GameService {
     }
 
     async pickWinner(game: GameDocument) {
-        const [{ blockhash }, { privateSeed }] = await Promise.all([
-            connection.getRecentBlockhash(),
-            this.gameModel.findById(game._id).select('privateSeed')
-        ])
-        const seed = `${game.creator.publicKey}-${game.opponent.publicKey}-${privateSeed}-${blockhash}`
-        const resultHash = createHash('sha256').update(seed).digest('hex')
-        const hashInt = parseInt(resultHash.slice(0, 8), 16)
-        const result = hashInt % 2
-        const winner = game.creatorChoice === result ? game.creator : game.opponent
-
-        game.winner = winner
-        game.result = result
-        game.blockhash = blockhash
-        game.status = 'ended'
         game.endedAt = Date.now()
+        game.status = 'ended'
 
-        await Promise.all([
-            this.userService.changeBalance(winner, Math.round(game.amount * 2 * ((100 - game.fee) / 100)), false),
-            game.save()
-        ])
+        if (game.creatorMove === game.opponentMove) {
+            await Promise.all([
+                this.userService.changeBalance(game.creator, game.amount),
+                this.userService.changeBalance(game.opponent, game.amount),
+                game.save()
+            ])
+        } else {
+            const moves = [game.creatorMove, game.opponentMove]
+            let winningChoice;
+            if (moves === [0, 2] || moves === [2, 0]) {
+                winningChoice = 0
+            } else {
+                winningChoice = Math.max(...moves)
+            }
+
+            const winner = game.creatorMove === winningChoice ? game.creator : game.opponent
+            game.winner = winner
+
+            await Promise.all([
+                this.userService.changeBalance(winner, Math.round(game.amount * 2 * ((100 - game.fee) / 100)), false),
+                game.save()
+            ])
+        }
+
         this.gameGateway.gameUpdateNotify(game)
     }
 
@@ -110,9 +118,6 @@ export class GameService {
 
             .populate('creator opponent winner')
             .sort({ updatedAt: -1 })
-            .select('+privateSeed').exec()
-
-        games.forEach(game => game.privateSeed = game.status === 'active' ? '-' : game.privateSeed)
 
         return games
     }
@@ -130,7 +135,7 @@ export class GameService {
     }
 
     async getLastEnded(): Promise<GameDocument[]> {
-        return this.gameModel.find({ status: 'ended' }).select('+privateSeed').populate('creator opponent winner').sort({ updatedAt: -1 }).limit(LAST_GAMES_TO_SHOW)
+        return this.gameModel.find({ status: 'ended' }).populate('creator opponent winner').sort({ updatedAt: -1 }).limit(LAST_GAMES_TO_SHOW)
     }
 
     async userActiveCount(userId: ObjectId): Promise<number> {

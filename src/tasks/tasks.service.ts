@@ -6,11 +6,8 @@ import { TransactionService } from 'src/transaction/transaction.service';
 export class TasksService {
     constructor(private transactionService: TransactionService) { }
 
-    async checkDeposits() {
-        const unConfirmedTransactions = await this.transactionService.getUnconfirmed()
-
-        Logger.log(`${unConfirmedTransactions.length} unconfirmed transactions`)
-
-        if (unConfirmedTransactions.length > 0) await this.transactionService.confirmMany(unConfirmedTransactions)
+    async processTransactions() {
+        Logger.log("processing transactions")
+        await this.transactionService.processTransactions()
     }
 }

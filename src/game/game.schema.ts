@@ -15,26 +15,17 @@ export class Game {
     @Prop({ required: true, type: SchemaTypes.ObjectId, ref: 'User' })
     creator: UserDocument
 
-    @Prop({ required: true, enum: [0, 1] })
-    creatorChoice: number
+    @Prop({ required: true, enum: [0, 1, 2] })
+    creatorMove: number
+
+    @Prop({ enum: [0, 1, 2] })
+    opponentMove: number
 
     @Prop({ default: 3 })
     fee: number
 
     @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
     opponent: UserDocument
-
-    @Prop({ required: true, select: false })
-    privateSeed: string
-
-    @Prop({ required: true })
-    privateSeedHash: string
-
-    @Prop()
-    blockhash: string
-
-    @Prop()
-    result: number
 
     @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
     winner: UserDocument

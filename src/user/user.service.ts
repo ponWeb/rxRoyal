@@ -1,42 +1,24 @@
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { Model, ObjectId } from 'mongoose';
 import { CreateUserDto } from './dto/createUser.dto';
 import { User, UserDocument } from './user.schema';
 import { sign } from 'tweetnacl'
 import { UserGateway } from './user.gateway';
-import { AssociatedKeypairService } from 'src/associatedKeypair/associatedKeypair.service';
 import { TransactionService } from 'src/transaction/transaction.service';
 import { CreateWithdrawDto } from './dto/createWithdraw.dto';
-import { EditUserDto } from './dto/editUserDto';
 
 const messageToSign = Uint8Array.from(Buffer.from('I agree with Terms & Services of solasphere'))
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel(User.name) private userModel: Model<UserDocument>, private userGateway: UserGateway, private associatedKeypairService: AssociatedKeypairService, @Inject(forwardRef(() => TransactionService)) private transactionService: TransactionService) { }
+    constructor(@InjectModel(User.name) private userModel: Model<UserDocument>, private userGateway: UserGateway, @Inject(forwardRef(() => TransactionService)) private transactionService: TransactionService) { }
 
     async create(createUserDto: CreateUserDto): Promise<UserDocument> {
-        const associatedKeypairId = await this.associatedKeypairService.create()
-        const createdUser = new this.userModel({ ...createUserDto, associatedKeypair: associatedKeypairId })
+        const createdUser = new this.userModel(createUserDto)
 
         return createdUser.save()
-    }
-
-    async editUserData(user: UserDocument, editUserDto: EditUserDto) {
-        const { username } = editUserDto
-        const usernameLowerCase = username.toLowerCase()
-
-        Logger.log('here!')
-        if (username && user.usernameLowerCase !== usernameLowerCase) {
-            Logger.log(usernameLowerCase)
-            const userWithSameUsername = await this.userModel.findOne({ usernameLowerCase })
-            if (userWithSameUsername) throw new HttpException('Username is already taken', HttpStatus.FORBIDDEN)
-            user.username = username
-        }
-        await user.save()
-        return user
     }
 
     async findById(userId: ObjectId): Promise<UserDocument | null> {
@@ -64,22 +46,23 @@ export class UserService {
         await this.userModel.updateOne({ _id: userId }, { lastMessageAt: Date.now() })
     }
 
-    async getAssociatedKeypair(user: UserDocument) {
-        return this.associatedKeypairService.findById(user.associatedKeypair._id, true)
-    }
-
     async requestWithdraw(user: UserDocument, createWithdrawDto: CreateWithdrawDto) {
         const { amount } = createWithdrawDto
 
         if (user.balance < amount) throw new HttpException('Balance needs to be higher than the withdraw amount', HttpStatus.FORBIDDEN)
+        const pendingWithdraw = await this.transactionService.getPendingWithdraw(user)
 
-        const [associatedKeypair] = await Promise.all([
-            this.associatedKeypairService.findById(user.associatedKeypair._id),
-            this.changeBalance(user, -amount, false)
+        if (pendingWithdraw) throw new HttpException('You already have pending withdraw', HttpStatus.FORBIDDEN)
+
+        const [withdraw] = await Promise.all([
+            this.transactionService.createWithdrawTx(user.publicKey, amount),
+            this.changeBalance(user, -amount)
         ])
 
-        await this.transactionService.sendLamportsFromServer(associatedKeypair.publicKey, amount)
+        return withdraw
+    }
 
-        this.userGateway.balanceChangeNotify(user._id, -amount)
+    async getPendingWithdraw(user: UserDocument) {
+        return this.transactionService.getPendingWithdraw(user)
     }
 }

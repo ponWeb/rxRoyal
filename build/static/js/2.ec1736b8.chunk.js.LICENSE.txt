@@ -91,7 +91,7 @@ THE SOFTWARE.
 /*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 /**
- * React Router DOM v6.2.1
+ * React Router DOM v6.2.2
  *
  * Copyright (c) Remix Software Inc.
  *
@@ -102,7 +102,7 @@ THE SOFTWARE.
  */
 
 /**
- * React Router v6.2.1
+ * React Router v6.2.2
  *
  * Copyright (c) Remix Software Inc.
  *

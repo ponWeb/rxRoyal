@@ -10,26 +10,19 @@ export class UserController {
     constructor(private userService: UserService) { }
 
     @UseGuards(AuthenticatedGuard)
-    @Post('/editUser')
-    async editUser(@Req() req, @Body() editUserDto: EditUserDto) {
-        const { user } = req
-
-        return await this.userService.editUserData(user, editUserDto)
-    }
-    @UseGuards(AuthenticatedGuard)
-    @Get('/associatedKeypair')
-    async getAssociatedKeypair(@Req() req) {
-        const { user } = req
-
-        return await this.userService.getAssociatedKeypair(user)
-    }
-
-    @UseGuards(AuthenticatedGuard)
     @Post('/requestWithdraw')
     async requestWithdraw(@Req() req, @Body() createWithdrawDto: CreateWithdrawDto) {
         const { user } = req
 
         return await this.userService.requestWithdraw(user, createWithdrawDto)
+    }
+
+    @UseGuards(AuthenticatedGuard)
+    @Get('/pendingWithdraw')
+    async getPendingWithdraw(@Req() req) {
+        const { user } = req
+
+        return await this.userService.getPendingWithdraw(user)
     }
 
     @Get('/:publicKey')
