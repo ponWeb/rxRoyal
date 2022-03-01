@@ -9,7 +9,7 @@ import { UserGateway } from './user.gateway';
 import { TransactionService } from 'src/transaction/transaction.service';
 import { CreateWithdrawDto } from './dto/createWithdraw.dto';
 
-const messageToSign = Uint8Array.from(Buffer.from('I agree with Terms & Services of solasphere'))
+const messageToSign = Uint8Array.from(Buffer.from('Login to the Degen Games'))
 
 @Injectable()
 export class UserService {
