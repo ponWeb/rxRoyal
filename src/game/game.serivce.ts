@@ -72,12 +72,12 @@ export class GameService {
                 game.save()
             ])
         } else {
-            const moves = [game.creatorMove, game.opponentMove]
+            const moves = [game.creatorMove, game.opponentMove].sort()
             let winningChoice;
-            if (moves === [0, 2] || moves === [2, 0]) {
+            if (moves[0] === 0 && moves[1] === 2) {
                 winningChoice = 0
             } else {
-                winningChoice = Math.max(...moves)
+                winningChoice = moves[1]
             }
 
             const winner = game.creatorMove === winningChoice ? game.creator : game.opponent
