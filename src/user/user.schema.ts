@@ -12,7 +12,7 @@ export class User {
     @Prop({ default: Date.now() - 3000 })
     lastMessageAt: number
 
-    @Prop({ default: 0 })
+    @Prop({ default: 0, min: 0 })
     balance: number;
 }
 

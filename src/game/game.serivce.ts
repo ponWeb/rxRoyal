@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Connection, clusterApiUrl } from '@solana/web3.js';
+import { Connection, clusterApiUrl, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Model, ObjectId, Types } from "mongoose";
 import { User, UserDocument } from "src/user/user.schema";
 import { UserService } from "src/user/user.service";
@@ -12,10 +12,7 @@ import csprng from "src/utils/csprng";
 import { GameIdDto } from "./dto/gameId.dto";
 import { JoinGameDto } from "./dto/joinGame.dto";
 
-const connection = new Connection(
-    clusterApiUrl('mainnet-beta'),
-    'confirmed',
-);
+const GAME_FEE = 4
 
 const LAST_GAMES_TO_SHOW = 30
 
@@ -24,7 +21,8 @@ export class GameService {
     constructor(@InjectModel(Game.name) private gameModel: Model<GameDocument>, private userService: UserService, private gameGateway: GameGateway) { }
 
     async create(user: UserDocument, createGameDto: CreateGameDto) {
-        if (user.balance < createGameDto.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
+        const payAmount = createGameDto.amount * (1 + GAME_FEE / 100)
+        if (user.balance < payAmount) throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
         const userActiveCount = await this.userActiveCount(user._id)
 
         if (!(userActiveCount < 5)) throw new HttpException("You can't have more than 5 active games", HttpStatus.FORBIDDEN)
@@ -34,7 +32,7 @@ export class GameService {
         newGame.creatorMove = createGameDto.creatorMove
 
         try {
-            await this.userService.changeBalance(user, -createGameDto.amount)
+            await this.userService.changeBalance(user, -payAmount)
         } catch (e) {
             throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
         }
@@ -86,7 +84,7 @@ export class GameService {
             game.winner = winner
 
             await Promise.all([
-                this.userService.changeBalance(winner, Math.round(game.amount * 2 * ((100 - game.fee) / 100)), false),
+                this.userService.changeBalance(winner, game.amount * 2, false),
                 game.save()
             ])
         }

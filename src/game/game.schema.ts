@@ -21,7 +21,7 @@ export class Game {
     @Prop({ enum: [0, 1, 2] })
     opponentMove: number
 
-    @Prop({ default: 3 })
+    @Prop({ default: 4 })
     fee: number
 
     @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
