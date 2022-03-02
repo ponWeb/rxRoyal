@@ -2,7 +2,6 @@ import { Body, Controller, Get, Logger, Param, Post, Req, UseGuards } from '@nes
 import { AuthenticatedGuard } from 'src/auth/signedMessage.guard';
 import { CreateWithdrawDto } from './dto/createWithdraw.dto';
 import { PublicKeyDto } from './dto/publicKey.dto';
-import { EditUserDto } from './dto/editUserDto';
 import { UserService } from './user.service';
 
 @Controller('u')

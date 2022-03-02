@@ -1,11 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as passport from 'passport'
-import * as session from 'express-session'
-import * as connectRedis from 'connect-redis';
-import * as Redis from 'ioredis';
+import passport from 'passport'
+import session from 'express-session'
+import connectRedis from 'connect-redis';
+import Redis from 'ioredis';
 import { ValidationPipe } from '@nestjs/common';
-import * as cookieParser from 'cookie-parser'
 import helmet from 'helmet'
 import sslRedirect from 'heroku-ssl-redirect'
 import { ConfigService } from '@nestjs/config';
@@ -45,7 +44,6 @@ async function bootstrap() {
     stopAtFirstError: true
   }));
   app.enableCors({ credentials: true })
-  app.use(cookieParser())
   app.use(sslRedirect())
   app.setGlobalPrefix('api')
 
