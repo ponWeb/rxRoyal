@@ -7,8 +7,6 @@ import { UserService } from "src/user/user.service";
 import { CreateGameDto } from "./dto/createGame.dto";
 import { GameGateway } from "./game.gateway";
 import { Game, GameDocument } from "./game.schema";
-import { createHash } from "crypto";
-import csprng from "src/utils/csprng";
 import { GameIdDto } from "./dto/gameId.dto";
 import { JoinGameDto } from "./dto/joinGame.dto";
 
@@ -46,7 +44,8 @@ export class GameService {
         if (!game) throw new HttpException('Game does not exists', HttpStatus.FORBIDDEN)
         if (game.status !== 'active') throw new HttpException('You can join only active games', HttpStatus.FORBIDDEN)
 
-        if (user.balance < game.amount) throw new HttpException('Balance needs to be higher than the game bet', HttpStatus.FORBIDDEN)
+        const payAmount = game.amount * (1 + game.fee / 100)
+        if (user.balance < payAmount) throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
         if (user._id.equals(game.creator._id)) throw new HttpException('You can not join your own game', HttpStatus.FORBIDDEN)
 
         game.opponent = user
@@ -54,7 +53,7 @@ export class GameService {
         game.status = 'joined'
 
         await Promise.all([
-            this.userService.changeBalance(user, -game.amount),
+            this.userService.changeBalance(user, -payAmount),
             game.save()
         ])
         this.gameGateway.gameUpdateNotify(game)
@@ -101,14 +100,14 @@ export class GameService {
 
         game.status = 'cancelled'
         await Promise.all([
-            this.userService.changeBalance(game.creator, game.amount),
+            this.userService.changeBalance(game.creator, game.amount * (1 + game.fee / 100)),
             game.save()
         ])
         this.gameGateway.gameUpdateNotify(game)
     }
 
     async findById(userId: Types.ObjectId): Promise<GameDocument | null> {
-        return this.gameModel.findById(userId).populate('creator').populate('creator opponent winner').exec()
+        return this.gameModel.findById(userId).populate('creator opponent winner').exec()
     }
 
     async findByUserId(userId: Types.ObjectId) {

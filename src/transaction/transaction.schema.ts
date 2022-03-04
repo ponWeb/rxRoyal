@@ -9,7 +9,7 @@ export class Transaction {
     @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
     owner: UserDocument
 
-    @Prop({ unique: true })
+    @Prop()
     signature: string;
 
     @Prop({ enum: ['deposit', 'withdraw'] })
