@@ -19,7 +19,7 @@ export class UserGateway implements OnGatewayConnection {
         client.join(_id)
     }
 
-    balanceChangeNotify(_id: Object, balance: number, fromDeposit = false) {
-        this.server.to(_id.toString()).emit('balanceChange', balance, fromDeposit)
+    balanceChangeNotify(_id: Object, balance: number, options?: { fromDeposit: boolean }) {
+        this.server.to(_id.toString()).emit('balanceChange', balance, !!options?.fromDeposit)
     }
 }

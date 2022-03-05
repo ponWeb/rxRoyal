@@ -189,7 +189,7 @@ export class TransactionService {
 
         const deposit = new this.transactionModel({ owner: user, signature, type: 'deposit', status: 'confirmed', amount })
         await deposit.save()
-        this.userService.changeBalance(user, amount, true, true)
+        this.userService.changeBalance(user, amount, { fromDeposit: true })
     }
 
 }

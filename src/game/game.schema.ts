@@ -15,7 +15,7 @@ export class Game {
     @Prop({ required: true, type: SchemaTypes.ObjectId, ref: 'User' })
     creator: UserDocument
 
-    @Prop({ required: true, enum: [0, 1, 2] })
+    @Prop({ required: true, enum: [0, 1, 2], select: false })
     creatorMove: number
 
     @Prop({ enum: [0, 1, 2] })

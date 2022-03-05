@@ -36,10 +36,10 @@ export class UserService {
         return isVerified
     }
 
-    async changeBalance(user: UserDocument, amount: number, notify: boolean = true, fromDeposit = false, versionKey = false) {
+    async changeBalance(user: UserDocument, amount: number, options?: { disableNotification?: boolean, fromDeposit?: boolean }) {
         user.balance += amount
         await user.save()
-        notify ? this.userGateway.balanceChangeNotify(user._id, amount, fromDeposit) : null
+        options?.disableNotification ? null : this.userGateway.balanceChangeNotify(user._id, amount, { fromDeposit: options?.fromDeposit })
     }
 
     async updateLastMessage(userId: ObjectId) {

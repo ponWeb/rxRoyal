@@ -20,7 +20,7 @@ export class GameService {
 
     async create(user: UserDocument, createGameDto: CreateGameDto) {
         const payAmount = createGameDto.amount * (1 + GAME_FEE / 100)
-        if (user.balance < payAmount) throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
+        if (user.balance < payAmount) throw new HttpException('Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)', HttpStatus.FORBIDDEN)
         const userActiveCount = await this.userActiveCount(user._id)
 
         if (!(userActiveCount < 5)) throw new HttpException("You can't have more than 5 active games", HttpStatus.FORBIDDEN)
@@ -39,13 +39,13 @@ export class GameService {
     }
 
     async join(joinGameDto: JoinGameDto, user: UserDocument) {
-        const game = await this.findById(joinGameDto.gameId)
+        const game = await this.findById(joinGameDto.gameId, { selectCreatorMove: true })
 
         if (!game) throw new HttpException('Game does not exists', HttpStatus.FORBIDDEN)
         if (game.status !== 'active') throw new HttpException('You can join only active games', HttpStatus.FORBIDDEN)
 
         const payAmount = game.amount * (1 + game.fee / 100)
-        if (user.balance < payAmount) throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
+        if (user.balance < payAmount) throw new HttpException('Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)', HttpStatus.FORBIDDEN)
         if (user._id.equals(game.creator._id)) throw new HttpException('You can not join your own game', HttpStatus.FORBIDDEN)
 
         game.opponent = user
@@ -83,7 +83,7 @@ export class GameService {
             game.winner = winner
 
             await Promise.all([
-                this.userService.changeBalance(winner, game.amount * 2, false),
+                this.userService.changeBalance(winner, game.amount * 2, { disableNotification: true }),
                 game.save()
             ])
         }
@@ -106,8 +106,10 @@ export class GameService {
         this.gameGateway.gameUpdateNotify(game)
     }
 
-    async findById(userId: Types.ObjectId): Promise<GameDocument | null> {
-        return this.gameModel.findById(userId).populate('creator opponent winner').exec()
+    async findById(userId: Types.ObjectId, options?: { selectCreatorMove: boolean }): Promise<GameDocument | null> {
+        if (options?.selectCreatorMove) {
+            return this.gameModel.findById(userId).populate('creator opponent winner').select('+creatorMove').exec()
+        }
     }
 
     async findByUserId(userId: Types.ObjectId) {
@@ -127,11 +129,11 @@ export class GameService {
     }
 
     async getActive(): Promise<GameDocument[]> {
-        return this.gameModel.find({ status: 'active' }).populate('creator opponent').select('-creatorMove')
+        return this.gameModel.find({ status: 'active' }).populate('creator opponent')
     }
 
     async getLastEnded(): Promise<GameDocument[]> {
-        return this.gameModel.find({ status: 'ended' }).populate('creator opponent winner').sort({ updatedAt: -1 }).limit(LAST_GAMES_TO_SHOW)
+        return this.gameModel.find({ status: 'ended' }).populate('creator opponent winner').select('+creatorMove').sort({ updatedAt: -1 }).limit(LAST_GAMES_TO_SHOW)
     }
 
     async userActiveCount(userId: ObjectId): Promise<number> {
