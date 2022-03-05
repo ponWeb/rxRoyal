@@ -7,7 +7,6 @@ export class TasksService {
     constructor(private transactionService: TransactionService) { }
 
     async processTransactions() {
-        Logger.log("processing transactions")
         await this.transactionService.processTransactions()
     }
 }
