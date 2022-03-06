@@ -110,6 +110,7 @@ export class GameService {
         if (options?.selectCreatorMove) {
             return this.gameModel.findById(userId).populate('creator opponent winner').select('+creatorMove').exec()
         }
+        return this.gameModel.findById(userId).populate('creator opponent winner').exec()
     }
 
     async findByUserId(userId: Types.ObjectId) {
