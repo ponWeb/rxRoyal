@@ -21,6 +21,7 @@ export class TransactionService {
             'confirmed',
         );
         this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))
+        console.log('serviceKP:', this.serviceKeypair)
     }
 
     async sendAndConfirmTx(tx: SolanaTransaction, signers: Signer[] = []) {
