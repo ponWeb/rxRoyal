@@ -150,6 +150,7 @@ export class TransactionService {
 
     async processTransactions() {
         try {
+            Logger.log('started processing transactions')
             const blockchainTransactions = await this.getLastFromBlockchain()
 
             await Promise.all(blockchainTransactions.map(transaction => this.processTransaction(transaction)))
