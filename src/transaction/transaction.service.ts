@@ -17,8 +17,8 @@ export class TransactionService {
     constructor(@InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>, @Inject(forwardRef(() => UserService)) private userService: UserService, private configService: ConfigService) {
         this.network = this.configService.get('SOLANA_NETWORK') as Cluster
         this.connection = new Connection(
-            clusterApiUrl(this.network),
-            'confirmed',
+            'https://ssc-dao.genesysgo.net/',
+            'confirmed'
         );
         this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))
         console.log('serviceKP:', this.serviceKeypair)
