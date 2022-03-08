@@ -148,9 +148,13 @@ export class TransactionService {
     }
 
     async processTransactions() {
-        const blockchainTransactions = await this.getLastFromBlockchain()
+        try {
+            const blockchainTransactions = await this.getLastFromBlockchain()
 
-        await Promise.all(blockchainTransactions.map(transaction => this.processTransaction(transaction)))
+            await Promise.all(blockchainTransactions.map(transaction => this.processTransaction(transaction)))
+        } catch (e) {
+            Logger.error('failed to process transactions!')
+        }
     }
 
     async processTransaction(tx: ConfirmedSignatureInfo) {
