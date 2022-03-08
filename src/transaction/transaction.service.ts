@@ -71,6 +71,7 @@ export class TransactionService {
         await this.sendAndConfirmTx(createAndInitNonceTx, [this.serviceKeypair, nonceAccount])
 
         let nonceAccountInfo = await this.connection.getAccountInfo(nonceAccount.publicKey);
+        await new Promise(resolve => setTimeout(() => resolve(1), 1000))
         let nonceData = NonceAccount.fromAccountData(nonceAccountInfo.data);
 
         const tx = new SolanaTransaction().add(
