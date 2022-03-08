@@ -54,10 +54,15 @@ export class UserService {
 
         if (pendingWithdraw) throw new HttpException('You already have pending withdraw', HttpStatus.FORBIDDEN)
 
-        const [withdraw] = await Promise.all([
-            this.transactionService.createWithdrawTx(user.publicKey, amount),
-            this.changeBalance(user, -amount)
-        ])
+        let withdraw;
+
+        try {
+            await this.changeBalance(user, -amount)
+            withdraw = await this.transactionService.createWithdrawTx(user.publicKey, amount)
+        } catch (e) {
+            console.log(e)
+            await this.changeBalance(user, amount)
+        }
 
         return withdraw
     }
