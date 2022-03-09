@@ -17,11 +17,11 @@ export class UserController {
     }
 
     @UseGuards(AuthenticatedGuard)
-    @Get('/pendingWithdraw')
-    async getPendingWithdraw(@Req() req) {
+    @Get('/associatedKeypair')
+    async getAssociatedKeypair(@Req() req) {
         const { user } = req
 
-        return await this.userService.getPendingWithdraw(user)
+        return await this.userService.getAssociatedKeypair(user)
     }
 
     @Get('/:publicKey')

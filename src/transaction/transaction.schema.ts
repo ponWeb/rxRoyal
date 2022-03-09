@@ -17,15 +17,6 @@ export class Transaction {
 
     @Prop({ enum: ['pending', 'confirmed'] })
     status: string
-
-    @Prop()
-    amount: number
-
-    @Prop()
-    instructions: number[]
-
-    @Prop()
-    serviceSignature: number[]
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

@@ -5,9 +5,10 @@ import { UserService } from './user.service';
 import { User, UserSchema } from './user.schema';
 import { UserGateway } from './user.gateway';
 import { TransactionModule } from 'src/transaction/transaction.module';
+import { AssociatedKeypairModule } from 'src/associatedKeypair/associatedKeypair.module';
 
 @Module({
-    imports: [forwardRef(() => TransactionModule), MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
+    imports: [forwardRef(() => TransactionModule), AssociatedKeypairModule, MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
     controllers: [UserController],
     providers: [UserService, UserGateway],
     exports: [UserService]

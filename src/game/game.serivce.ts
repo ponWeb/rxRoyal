@@ -18,8 +18,18 @@ const LAST_GAMES_TO_SHOW = 30
 export class GameService {
     constructor(@InjectModel(Game.name) private gameModel: Model<GameDocument>, private userService: UserService, private gameGateway: GameGateway) { }
 
+    async calculateDailyFees() {
+        const games = await this.gameModel.find({ createdAt: { $gte: Date.now() - 86400 * 10000 }, status: 'ended' })
+        let totalBets = 0
+        games.forEach(game => {
+            totalBets += game.amount * 2
+        })
+        console.log(games.length, totalBets / LAMPORTS_PER_SOL)
+    }
+
     async create(user: UserDocument, createGameDto: CreateGameDto) {
         const payAmount = createGameDto.amount * (1 + GAME_FEE / 100)
+        Logger.log(typeof user.balance, payAmount)
         if (user.balance < payAmount) throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
         const userActiveCount = await this.userActiveCount(user._id)
 
