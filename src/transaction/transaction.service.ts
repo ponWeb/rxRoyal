@@ -17,8 +17,7 @@ export class TransactionService {
     constructor(@InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>, @Inject(forwardRef(() => UserService)) private userService: UserService, private configService: ConfigService) {
         this.network = this.configService.get('SOLANA_NETWORK') as Cluster
         this.connection = new Connection(
-            'https://ssc-dao.genesysgo.net/',
-            'confirmed'
+            'https://ssc-dao.genesysgo.net/'
         );
         this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))
         console.log('serviceKP:', this.serviceKeypair)
@@ -26,7 +25,7 @@ export class TransactionService {
 
     async sendAndConfirmTx(tx: SolanaTransaction, signers: Signer[] = []) {
         const txhash = await this.connection.sendTransaction(tx, signers)
-        await this.connection.confirmTransaction(txhash, 'confirmed')
+        await this.connection.confirmTransaction(txhash)
         return txhash
     }
 
@@ -71,7 +70,6 @@ export class TransactionService {
         await this.sendAndConfirmTx(createAndInitNonceTx, [this.serviceKeypair, nonceAccount])
 
         let nonceAccountInfo = await this.connection.getAccountInfo(nonceAccount.publicKey);
-        await new Promise(resolve => setTimeout(() => resolve(1), 1000))
         let nonceData = NonceAccount.fromAccountData(nonceAccountInfo.data);
 
         const tx = new SolanaTransaction().add(

@@ -54,17 +54,14 @@ export class UserService {
 
         if (pendingWithdraw) throw new HttpException('You already have pending withdraw', HttpStatus.FORBIDDEN)
 
-        let withdraw;
-
         try {
             await this.changeBalance(user, -amount)
-            withdraw = await this.transactionService.createWithdrawTx(user.publicKey, amount)
+            return await this.transactionService.createWithdrawTx(user.publicKey, amount)
         } catch (e) {
             console.log(e)
             await this.changeBalance(user, amount)
+            throw new HttpException('Failed to create withdraw. Try again later', HttpStatus.INTERNAL_SERVER_ERROR)
         }
-
-        return withdraw
     }
 
     async getPendingWithdraw(user: UserDocument) {
