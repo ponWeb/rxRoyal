@@ -4,7 +4,7 @@ import { User, UserDocument } from "src/user/user.schema";
 
 export type GameDocument = Game & Document
 
-@Schema({ timestamps: true, versionKey: false })
+@Schema({ timestamps: true, optimisticConcurrency: true })
 export class Game {
     @Prop({ default: 'active', enum: ['active', 'joined', 'cancelled', 'ended'] })
     status: string

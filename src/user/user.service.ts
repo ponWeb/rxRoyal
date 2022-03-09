@@ -59,13 +59,8 @@ export class UserService {
             this.changeBalance(user, -amount, { disableNotification: true })
         ])
 
-        try {
-            await this.transactionService.sendLamportsFromServer(associatedKeypair.publicKey, amount)
-            this.userGateway.balanceChangeNotify(user._id, -amount)
-        } catch (e) {
-            this.changeBalance(user, amount, { disableNotification: true })
-            throw new HttpException('Server Withdraw Error. Try again later', HttpStatus.INTERNAL_SERVER_ERROR)
-        }
+        await this.transactionService.sendLamportsFromServer(associatedKeypair.publicKey, amount)
+        this.userGateway.balanceChangeNotify(user._id, -amount)
     }
 
     async getAssociatedKeypair(user: UserDocument) {

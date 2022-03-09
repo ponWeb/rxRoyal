@@ -29,7 +29,7 @@ export class GameService {
 
     async create(user: UserDocument, createGameDto: CreateGameDto) {
         const payAmount = createGameDto.amount * (1 + GAME_FEE / 100)
-        Logger.log(typeof user.balance, payAmount)
+
         if (user.balance < payAmount) throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
         const userActiveCount = await this.userActiveCount(user._id)
 
@@ -109,10 +109,9 @@ export class GameService {
         if (game.status !== 'active') throw new HttpException('You can cancel only active game', HttpStatus.FORBIDDEN)
 
         game.status = 'cancelled'
-        await Promise.all([
-            this.userService.changeBalance(game.creator, game.amount * (1 + game.fee / 100)),
-            game.save()
-        ])
+        await game.save()
+        await this.userService.changeBalance(game.creator, game.amount * (1 + game.fee / 100))
+
         this.gameGateway.gameUpdateNotify(game)
     }
 
