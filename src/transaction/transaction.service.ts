@@ -20,7 +20,6 @@ export class TransactionService {
             'https://ssc-dao.genesysgo.net/'
         );
         this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))
-        console.log('serviceKP:', this.serviceKeypair)
     }
 
     async sendLamportsFromServer(receiverPublicKey: string, amount: number) {
