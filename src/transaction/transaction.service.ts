@@ -32,7 +32,9 @@ export class TransactionService {
                 })
             )
 
-            await this.connection.sendTransaction(tx, [this.serviceKeypair])
+            tx.recentBlockhash = await
+
+                await this.connection.sendTransaction(tx, [this.serviceKeypair])
         } catch (e) {
             Logger.log(e)
             throw new HttpException('Server Withdraw Error. Try again later', HttpStatus.INTERNAL_SERVER_ERROR)
@@ -84,7 +86,7 @@ export class TransactionService {
     }
 
     async getLastFromBlockchain(): Promise<ConfirmedSignatureInfo[]> {
-        const transactions = await this.connection.getSignaturesForAddress(this.serviceKeypair.publicKey, { limit: 20 })
+        const transactions = await this.connection.getSignaturesForAddress(this.serviceKeypair.publicKey, { limit: 10 })
 
         return transactions
     }
