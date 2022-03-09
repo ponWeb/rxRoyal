@@ -32,9 +32,7 @@ export class TransactionService {
                 })
             )
 
-            tx.recentBlockhash = await
-
-                await this.connection.sendTransaction(tx, [this.serviceKeypair])
+            await this.connection.sendTransaction(tx, [this.serviceKeypair])
         } catch (e) {
             Logger.log(e)
             throw new HttpException('Server Withdraw Error. Try again later', HttpStatus.INTERNAL_SERVER_ERROR)

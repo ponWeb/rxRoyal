@@ -1,5 +1,5 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { IsNotEmpty, IsInt, Min } from 'class-validator';
+import { IsNotEmpty, IsInt, Min, } from 'class-validator';
 
 export class CreateWithdrawDto {
     @IsInt()
