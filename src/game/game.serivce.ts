@@ -76,8 +76,8 @@ export class GameService {
 
         if (game.creatorMove === game.opponentMove) {
             await Promise.all([
-                this.userService.changeBalance(game.creator, game.amount),
-                this.userService.changeBalance(game.opponent, game.amount),
+                this.userService.changeBalance(game.creator, game.amount, { disableNotification: true }),
+                this.userService.changeBalance(game.opponent, game.amount, { disableNotification: true }),
                 game.save()
             ])
         } else {
@@ -93,7 +93,7 @@ export class GameService {
             game.winner = winner
 
             await Promise.all([
-                this.userService.changeBalance(winner, game.amount * 2),
+                this.userService.changeBalance(winner, game.amount * 2, { disableNotification: true }),
                 game.save()
             ])
         }
