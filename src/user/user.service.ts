@@ -1,6 +1,6 @@
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { Model, ObjectId } from 'mongoose';
 import { CreateUserDto } from './dto/createUser.dto';
 import { User, UserDocument } from './user.schema';
@@ -63,6 +63,7 @@ export class UserService {
             await this.transactionService.sendLamportsFromServer(associatedKeypair.publicKey, amount)
             this.userGateway.balanceChangeNotify(user._id, -amount)
         } catch (e) {
+            Logger.error(e)
             await this.changeBalance(user, amount, { disableNotification: true })
             throw new HttpException('Server Withdraw Error. Try again later', HttpStatus.INTERNAL_SERVER_ERROR)
         }

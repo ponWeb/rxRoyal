@@ -62,10 +62,9 @@ export class GameService {
         game.opponentMove = joinGameDto.move
         game.status = 'joined'
 
-        await Promise.all([
-            this.userService.changeBalance(user, -payAmount),
-            game.save()
-        ])
+        await this.userService.changeBalance(user, -payAmount)
+        await game.save()
+
         this.gameGateway.gameUpdateNotify(game)
         this.pickWinner(game)
     }

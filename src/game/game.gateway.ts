@@ -20,6 +20,8 @@ export class GameGateway implements OnGatewayConnection {
     }
 
     newGameNotify(game: GameDocument): void {
+        game.creatorMove = undefined
+
         this.server.emit('newGame', game)
     }
     gameUpdateNotify(updatedGame: GameDocument): void {

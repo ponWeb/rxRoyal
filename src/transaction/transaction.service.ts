@@ -17,26 +17,25 @@ export class TransactionService {
     constructor(@InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>, @Inject(forwardRef(() => UserService)) private userService: UserService, private configService: ConfigService) {
         this.network = this.configService.get('SOLANA_NETWORK') as Cluster
         this.connection = new Connection(
-            'https://ssc-dao.genesysgo.net/'
+            'https://ssc-dao.genesysgo.net/',
+            'confirmed'
         );
         this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))
     }
 
     async sendLamportsFromServer(receiverPublicKey: string, amount: number) {
-        try {
-            const tx = new SolanaTransaction().add(
-                SystemProgram.transfer({
-                    fromPubkey: this.serviceKeypair.publicKey,
-                    toPubkey: new PublicKey(receiverPublicKey),
-                    lamports: amount
-                })
-            )
+        Logger.log('sending lamports')
 
-            await this.connection.sendTransaction(tx, [this.serviceKeypair])
-        } catch (e) {
-            Logger.log(e)
-            throw new HttpException('Server Withdraw Error. Try again later', HttpStatus.INTERNAL_SERVER_ERROR)
-        }
+        const tx = new SolanaTransaction().add(
+            SystemProgram.transfer({
+                fromPubkey: this.serviceKeypair.publicKey,
+                toPubkey: new PublicKey(receiverPublicKey),
+                lamports: amount
+            })
+        )
+
+        const txhash = await this.connection.sendTransaction(tx, [this.serviceKeypair])
+        await this.connection.confirmTransaction(txhash)
     }
 
     async getBySignatureFromBlockchain(signature: string): Promise<ParsedConfirmedTransaction> {
@@ -91,7 +90,6 @@ export class TransactionService {
 
     async processTransactions() {
         try {
-            Logger.log('started processing transactions')
             const blockchainTransactions = await this.getLastFromBlockchain()
 
             await Promise.all(blockchainTransactions.map(transaction => this.processTransaction(transaction)))
