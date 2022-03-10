@@ -17,7 +17,7 @@ export class TransactionService {
     constructor(@InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>, @Inject(forwardRef(() => UserService)) private userService: UserService, private configService: ConfigService) {
         this.network = this.configService.get('SOLANA_NETWORK') as Cluster
         this.connection = new Connection(
-            'https://ssc-dao.genesysgo.net/',
+            clusterApiUrl('mainnet-beta'),
             'confirmed'
         );
         this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))
@@ -34,8 +34,10 @@ export class TransactionService {
             })
         )
 
-        const txhash = await this.connection.sendTransaction(tx, [this.serviceKeypair])
-        await this.connection.confirmTransaction(txhash)
+        tx.recentBlockhash = (await this.connection.getRecentBlockhash()).blockhash
+        tx.sign(this.serviceKeypair)
+
+        const txhash = await this.connection.sendRawTransaction(tx.serialize(), { preflightCommitment: 'confirmed', maxRetries: 5 })
     }
 
     async getBySignatureFromBlockchain(signature: string): Promise<ParsedConfirmedTransaction> {
