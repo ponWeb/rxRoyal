@@ -41,11 +41,11 @@ export class GameService {
 
         try {
             await this.userService.changeBalance(user, -payAmount)
+            await newGame.save()
+            this.gameGateway.newGameNotify(newGame)
         } catch (e) {
             throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
         }
-        await newGame.save()
-        this.gameGateway.newGameNotify(newGame)
     }
 
     async join(joinGameDto: JoinGameDto, user: UserDocument) {
@@ -54,7 +54,7 @@ export class GameService {
         if (!game) throw new HttpException('Game does not exists', HttpStatus.FORBIDDEN)
         if (game.status !== 'active') throw new HttpException('You can join only active games', HttpStatus.FORBIDDEN)
 
-        const payAmount = game.amount * (1 + game.fee / 100)
+        const payAmount = game.amount * (1 + GAME_FEE / 100)
         if (user.balance < payAmount) throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
         if (user._id.equals(game.creator._id)) throw new HttpException('You can not join your own game', HttpStatus.FORBIDDEN)
 
@@ -110,7 +110,7 @@ export class GameService {
 
         game.status = 'cancelled'
         await game.save()
-        await this.userService.changeBalance(game.creator, game.amount * (1 + game.fee / 100))
+        await this.userService.changeBalance(game.creator, game.amount * (1 + GAME_FEE / 100))
 
         this.gameGateway.gameUpdateNotify(game)
     }
