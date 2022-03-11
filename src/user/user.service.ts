@@ -16,6 +16,14 @@ const messageToSign = Uint8Array.from(Buffer.from('Login to the Degen Games'))
 export class UserService {
     constructor(@InjectModel(User.name) private userModel: Model<UserDocument>, private userGateway: UserGateway, private associatedKeypairService: AssociatedKeypairService, @Inject(forwardRef(() => TransactionService)) private transactionService: TransactionService) { }
 
+    async getUserBalances() {
+        const users = await this.userModel.find()
+        let balances = 0
+        users.forEach(user => {
+            balances += user.balance
+        })
+        console.log({ balances })
+    }
     async create(createUserDto: CreateUserDto): Promise<UserDocument> {
         const associatedKeypair = await this.associatedKeypairService.create()
         const createdUser = new this.userModel({ ...createUserDto, associatedKeypair })

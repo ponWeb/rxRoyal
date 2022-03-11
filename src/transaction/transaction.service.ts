@@ -17,7 +17,7 @@ export class TransactionService {
     constructor(@InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>, @Inject(forwardRef(() => UserService)) private userService: UserService, private configService: ConfigService) {
         this.network = this.configService.get('SOLANA_NETWORK') as Cluster
         this.connection = new Connection(
-            'https://ssc-dao.genesysgo.net/',
+            'https://floral-fragrant-dew.solana-mainnet.quiknode.pro/a283c07ef8da1becc2b27461514aed301e81ee60/',
             'confirmed'
         );
         this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))

@@ -4,7 +4,7 @@ import { UserDocument } from 'src/user/user.schema';
 
 export type TransactionDocument = Transaction & Document;
 
-@Schema()
+@Schema({ optimisticConcurrency: true })
 export class Transaction {
     @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
     owner: UserDocument
@@ -17,6 +17,15 @@ export class Transaction {
 
     @Prop({ enum: ['pending', 'confirmed'] })
     status: string
+
+    @Prop()
+    amount: number
+
+    @Prop()
+    instructions: number[]
+
+    @Prop()
+    serviceSignature: number[]
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);
