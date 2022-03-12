@@ -34,7 +34,7 @@ async function bootstrap() {
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
-        connectSrc: ["'self'", `api.${config.get('SOLANA_NETWORK')}.solana.com`],
+        connectSrc: ["'self'", 'https://ssc-dao.genesysgo.net/'],
         scriptSrc: ["'self'", "'unsafe-inline'"]
       }
     }
