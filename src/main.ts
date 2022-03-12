@@ -34,7 +34,7 @@ async function bootstrap() {
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
-        connectSrc: ["'self'", 'https://ssc-dao.genesysgo.net/'],
+        connectSrc: ["'self'", 'https://ssc-dao.genesysgo.net/', 'wss://ssc-dao.genesysgo.net/'],
         scriptSrc: ["'self'", "'unsafe-inline'"]
       }
     }
