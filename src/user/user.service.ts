@@ -1,7 +1,7 @@
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { Connection, Model, ObjectId } from 'mongoose';
+import { Connection as MongoConnection, Model, ObjectId } from 'mongoose';
 import { CreateUserDto } from './dto/createUser.dto';
 import { User, UserDocument } from './user.schema';
 import { sign } from 'tweetnacl'
@@ -14,7 +14,7 @@ const messageToSign = Uint8Array.from(Buffer.from('Login to the Degen Games'))
 
 @Injectable()
 export class UserService {
-    constructor(@InjectConnection() private readonly connection: Connection, @InjectModel(User.name) private userModel: Model<UserDocument>, private userGateway: UserGateway, private associatedKeypairService: AssociatedKeypairService, @Inject(forwardRef(() => TransactionService)) private transactionService: TransactionService) { }
+    constructor(@InjectConnection() private readonly dbConnection: MongoConnection, @InjectModel(User.name) private userModel: Model<UserDocument>, private userGateway: UserGateway, private associatedKeypairService: AssociatedKeypairService, @Inject(forwardRef(() => TransactionService)) private transactionService: TransactionService) { }
 
     async getUserBalances() {
         const users = await this.userModel.find()
@@ -61,7 +61,7 @@ export class UserService {
         const { amount } = createWithdrawDto
         if (user.balance < amount) throw new HttpException('Balance needs to be higher than the withdraw amount', HttpStatus.FORBIDDEN)
 
-        const session = await this.connection.startSession()
+        const session = await this.dbConnection.startSession()
         session.startTransaction()
         user.$session(session)
 

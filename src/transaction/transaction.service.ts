@@ -1,7 +1,7 @@
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
+import { InjectConnection, InjectModel } from "@nestjs/mongoose";
 import { Connection, Keypair, ParsedConfirmedTransaction, clusterApiUrl, ConfirmedSignatureInfo, PublicKey, LAMPORTS_PER_SOL, SystemProgram, Cluster, NONCE_ACCOUNT_LENGTH, Signer, NonceAccount } from "@solana/web3.js";
-import { Model } from "mongoose";
+import { Connection as MongoConnection, Model } from "mongoose";
 import { UserService } from "src/user/user.service";
 import { Transaction, TransactionDocument } from "./transaction.schema";
 import { Transaction as SolanaTransaction } from '@solana/web3.js'
@@ -9,15 +9,13 @@ import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class TransactionService {
-    network: Cluster
     serviceKeypair: Keypair
     connection: Connection
     nonceAccount: Keypair
 
-    constructor(@InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>, @Inject(forwardRef(() => UserService)) private userService: UserService, private configService: ConfigService) {
-        this.network = this.configService.get('SOLANA_NETWORK') as Cluster
+    constructor(@InjectConnection() private readonly dbConnection: MongoConnection, @InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>, @Inject(forwardRef(() => UserService)) private userService: UserService, private configService: ConfigService) {
         this.connection = new Connection(
-            'https://floral-fragrant-dew.solana-mainnet.quiknode.pro/a283c07ef8da1becc2b27461514aed301e81ee60/',
+            this.configService.get('SOLANA_RPC_NODE'),
             'confirmed'
         );
         this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))
@@ -123,9 +121,24 @@ export class TransactionService {
         const user = await this.userService.findByPublicKey(sender.toString())
         if (!user) return
 
-        const deposit = new this.transactionModel({ owner: user, signature, type: 'deposit', status: 'confirmed', amount })
-        await deposit.save()
-        this.userService.changeBalance(user, amount, { fromDeposit: true })
+        const session = await this.dbConnection.startSession()
+        session.startTransaction()
+        user.$session(session)
+
+        try {
+            const deposit = new this.transactionModel({ owner: user, signature, type: 'deposit', status: 'confirmed', amount })
+            deposit.$session(session)
+
+            await deposit.save()
+            await this.userService.changeBalance(user, amount, { fromDeposit: true })
+
+            await session.commitTransaction()
+        } catch (e) {
+            Logger.error(e)
+            await session.abortTransaction()
+        } finally {
+            session.endSession()
+        }
     }
 
 }

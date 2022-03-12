@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { InjectConnection, InjectModel } from "@nestjs/mongoose";
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { Connection, Model, ObjectId, Types } from "mongoose";
+import { Connection as MongoConnection, Model, ObjectId, Types } from "mongoose";
 import { User, UserDocument } from "src/user/user.schema";
 import { UserService } from "src/user/user.service";
 import { CreateGameDto } from "./dto/createGame.dto";
@@ -17,7 +17,7 @@ const LAST_GAMES_TO_SHOW = 30
 
 @Injectable()
 export class GameService {
-    constructor(@InjectConnection() private readonly connection: Connection, @InjectModel(Game.name) private gameModel: Model<GameDocument>, private userService: UserService, private gameGateway: GameGateway) { }
+    constructor(@InjectConnection() private readonly dbConnection: MongoConnection, @InjectModel(Game.name) private gameModel: Model<GameDocument>, private userService: UserService, private gameGateway: GameGateway) { }
 
     async calculateDailyFees() {
         const games = await this.gameModel.find({ createdAt: { $gte: Date.now() - 86400 * 10000 }, status: 'ended' })
@@ -36,7 +36,7 @@ export class GameService {
 
         if (userActiveCount >= 5) throw new HttpException("You can't have more than 5 active games", HttpStatus.FORBIDDEN)
 
-        const session = await this.connection.startSession()
+        const session = await this.dbConnection.startSession()
         session.startTransaction()
         user.$session(session)
 
@@ -51,7 +51,6 @@ export class GameService {
             await session.commitTransaction()
             this.gameGateway.newGameNotify(newGame)
         } catch (e) {
-            console.log(e)
             await session.abortTransaction()
             throw new HttpException(`Failed to create a game`, HttpStatus.FORBIDDEN)
         } finally {
@@ -69,7 +68,7 @@ export class GameService {
         if (user.balance < payAmount) throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
         if (user._id.equals(game.creator._id)) throw new HttpException('You can not join your own game', HttpStatus.FORBIDDEN)
 
-        const session = await this.connection.startSession()
+        const session = await this.dbConnection.startSession()
         session.startTransaction()
         user.$session(session)
         game.$session(session)
@@ -86,7 +85,6 @@ export class GameService {
             this.gameGateway.gameUpdateNotify(game)
             this.pickWinner(game)
         } catch (e) {
-            console.log(e)
             await session.abortTransaction()
             throw new HttpException('Failed to join a game', HttpStatus.FORBIDDEN)
         } finally {
@@ -98,7 +96,7 @@ export class GameService {
         const opponent = game.opponent
         const creator = game.creator
 
-        const session = await this.connection.startSession()
+        const session = await this.dbConnection.startSession()
         session.startTransaction()
         game.$session(session)
         opponent.$session(session)
@@ -131,8 +129,6 @@ export class GameService {
             await session.commitTransaction()
             this.gameGateway.gameUpdateNotify(game)
         } catch (e) {
-            console.log(e)
-            console.log(e)
             await session.abortTransaction()
             throw new HttpException('Failed to pick a winner', HttpStatus.FORBIDDEN)
         } finally {
@@ -147,7 +143,7 @@ export class GameService {
         if (!user._id.equals(game.creator._id)) throw new HttpException('You can not cancel another person`s game', HttpStatus.FORBIDDEN)
         if (game.status !== 'active') throw new HttpException('You can cancel only active game', HttpStatus.FORBIDDEN)
 
-        const session = await this.connection.startSession()
+        const session = await this.dbConnection.startSession()
         session.startTransaction()
         game.$session(session)
         user.$session(session)
@@ -160,7 +156,6 @@ export class GameService {
             await session.commitTransaction()
             this.gameGateway.gameUpdateNotify(game)
         } catch (e) {
-            console.log(e)
             await session.abortTransaction()
             throw new HttpException('Failed to cancel a game', HttpStatus.FORBIDDEN)
         } finally {
