@@ -1,7 +1,7 @@
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { Model, ObjectId } from 'mongoose';
+import { Connection, Model, ObjectId } from 'mongoose';
 import { CreateUserDto } from './dto/createUser.dto';
 import { User, UserDocument } from './user.schema';
 import { sign } from 'tweetnacl'
@@ -14,7 +14,7 @@ const messageToSign = Uint8Array.from(Buffer.from('Login to the Degen Games'))
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel(User.name) private userModel: Model<UserDocument>, private userGateway: UserGateway, private associatedKeypairService: AssociatedKeypairService, @Inject(forwardRef(() => TransactionService)) private transactionService: TransactionService) { }
+    constructor(@InjectConnection() private readonly connection: Connection, @InjectModel(User.name) private userModel: Model<UserDocument>, private userGateway: UserGateway, private associatedKeypairService: AssociatedKeypairService, @Inject(forwardRef(() => TransactionService)) private transactionService: TransactionService) { }
 
     async getUserBalances() {
         const users = await this.userModel.find()
@@ -59,21 +59,26 @@ export class UserService {
 
     async requestWithdraw(user: UserDocument, createWithdrawDto: CreateWithdrawDto) {
         const { amount } = createWithdrawDto
-
         if (user.balance < amount) throw new HttpException('Balance needs to be higher than the withdraw amount', HttpStatus.FORBIDDEN)
 
-        const [associatedKeypair] = await Promise.all([
-            this.associatedKeypairService.findById(user.associatedKeypair._id),
-            this.changeBalance(user, -amount, { disableNotification: true })
-        ])
+        const session = await this.connection.startSession()
+        session.startTransaction()
+        user.$session(session)
 
         try {
+            const [associatedKeypair] = await Promise.all([
+                this.associatedKeypairService.findById(user.associatedKeypair._id),
+                this.changeBalance(user, -amount, { disableNotification: true })
+            ])
             await this.transactionService.sendLamportsFromServer(associatedKeypair.publicKey, amount)
+
+            await session.commitTransaction()
             this.userGateway.balanceChangeNotify(user._id, -amount)
         } catch (e) {
-            Logger.error(e)
-            await this.changeBalance(user, amount, { disableNotification: true })
+            await session.abortTransaction()
             throw new HttpException('Server Withdraw Error. Try again later', HttpStatus.INTERNAL_SERVER_ERROR)
+        } finally {
+            session.endSession()
         }
     }
 

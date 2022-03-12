@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Connection, clusterApiUrl, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { Model, ObjectId, Types } from "mongoose";
+import { InjectConnection, InjectModel } from "@nestjs/mongoose";
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, Model, ObjectId, Types } from "mongoose";
 import { User, UserDocument } from "src/user/user.schema";
 import { UserService } from "src/user/user.service";
 import { CreateGameDto } from "./dto/createGame.dto";
@@ -9,6 +9,7 @@ import { GameGateway } from "./game.gateway";
 import { Game, GameDocument } from "./game.schema";
 import { GameIdDto } from "./dto/gameId.dto";
 import { JoinGameDto } from "./dto/joinGame.dto";
+import assert from "assert";
 
 const GAME_FEE = 4
 
@@ -16,7 +17,7 @@ const LAST_GAMES_TO_SHOW = 30
 
 @Injectable()
 export class GameService {
-    constructor(@InjectModel(Game.name) private gameModel: Model<GameDocument>, private userService: UserService, private gameGateway: GameGateway) { }
+    constructor(@InjectConnection() private readonly connection: Connection, @InjectModel(Game.name) private gameModel: Model<GameDocument>, private userService: UserService, private gameGateway: GameGateway) { }
 
     async calculateDailyFees() {
         const games = await this.gameModel.find({ createdAt: { $gte: Date.now() - 86400 * 10000 }, status: 'ended' })
@@ -33,18 +34,28 @@ export class GameService {
         if (user.balance < payAmount) throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
         const userActiveCount = await this.userActiveCount(user._id)
 
-        if (!(userActiveCount < 5)) throw new HttpException("You can't have more than 5 active games", HttpStatus.FORBIDDEN)
+        if (userActiveCount >= 5) throw new HttpException("You can't have more than 5 active games", HttpStatus.FORBIDDEN)
 
-        const newGame = new this.gameModel(createGameDto)
-        newGame.creator = user
-        newGame.creatorMove = createGameDto.creatorMove
+        const session = await this.connection.startSession()
+        session.startTransaction()
+        user.$session(session)
 
         try {
+            const newGame = new this.gameModel(createGameDto)
+            newGame.creator = user
+            newGame.creatorMove = createGameDto.creatorMove
+
             await this.userService.changeBalance(user, -payAmount)
             await newGame.save()
+
+            await session.commitTransaction()
             this.gameGateway.newGameNotify(newGame)
         } catch (e) {
-            throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
+            console.log(e)
+            await session.abortTransaction()
+            throw new HttpException(`Failed to create a game`, HttpStatus.FORBIDDEN)
+        } finally {
+            session.endSession()
         }
     }
 
@@ -58,46 +69,75 @@ export class GameService {
         if (user.balance < payAmount) throw new HttpException(`Balance needs to be higher than the game bet + fee (${payAmount / LAMPORTS_PER_SOL} SOL)`, HttpStatus.FORBIDDEN)
         if (user._id.equals(game.creator._id)) throw new HttpException('You can not join your own game', HttpStatus.FORBIDDEN)
 
-        game.opponent = user
-        game.opponentMove = joinGameDto.move
-        game.status = 'joined'
+        const session = await this.connection.startSession()
+        session.startTransaction()
+        user.$session(session)
+        game.$session(session)
 
-        await this.userService.changeBalance(user, -payAmount)
-        await game.save()
+        try {
+            game.opponent = user
+            game.opponentMove = joinGameDto.move
+            game.status = 'joined'
 
-        this.gameGateway.gameUpdateNotify(game)
-        this.pickWinner(game)
+            await this.userService.changeBalance(user, -payAmount)
+            await game.save()
+            await session.commitTransaction()
+
+            this.gameGateway.gameUpdateNotify(game)
+            this.pickWinner(game)
+        } catch (e) {
+            console.log(e)
+            await session.abortTransaction()
+            throw new HttpException('Failed to join a game', HttpStatus.FORBIDDEN)
+        } finally {
+            session.endSession()
+        }
     }
 
     async pickWinner(game: GameDocument) {
-        game.endedAt = Date.now()
-        game.status = 'ended'
+        const opponent = game.opponent
+        const creator = game.creator
 
-        if (game.creatorMove === game.opponentMove) {
-            await Promise.all([
-                this.userService.changeBalance(game.creator, game.amount, { disableNotification: true }),
-                this.userService.changeBalance(game.opponent, game.amount, { disableNotification: true }),
-                game.save()
-            ])
-        } else {
-            const moves = [game.creatorMove, game.opponentMove].sort()
-            let winningChoice;
-            if (moves[0] === 0 && moves[1] === 2) {
-                winningChoice = 0
+        const session = await this.connection.startSession()
+        session.startTransaction()
+        game.$session(session)
+        opponent.$session(session)
+        creator.$session(session)
+
+        try {
+            game.endedAt = Date.now()
+            game.status = 'ended'
+
+            if (game.creatorMove === game.opponentMove) {
+                await this.userService.changeBalance(creator, game.amount, { disableNotification: true })
+                await this.userService.changeBalance(opponent, game.amount, { disableNotification: true })
+                await game.save()
             } else {
-                winningChoice = moves[1]
+                const moves = [game.creatorMove, game.opponentMove].sort()
+                let winningChoice;
+                if (moves[0] === 0 && moves[1] === 2) {
+                    winningChoice = 0
+                } else {
+                    winningChoice = moves[1]
+                }
+
+                const winner = game.creatorMove === winningChoice ? creator : opponent
+                game.winner = winner
+
+                await this.userService.changeBalance(winner, game.amount * 2, { disableNotification: true })
+                await game.save()
             }
 
-            const winner = game.creatorMove === winningChoice ? game.creator : game.opponent
-            game.winner = winner
-
-            await Promise.all([
-                this.userService.changeBalance(winner, game.amount * 2, { disableNotification: true }),
-                game.save()
-            ])
+            await session.commitTransaction()
+            this.gameGateway.gameUpdateNotify(game)
+        } catch (e) {
+            console.log(e)
+            console.log(e)
+            await session.abortTransaction()
+            throw new HttpException('Failed to pick a winner', HttpStatus.FORBIDDEN)
+        } finally {
+            session.endSession()
         }
-
-        this.gameGateway.gameUpdateNotify(game)
     }
 
     async cancel(gameIdDto: GameIdDto, user: UserDocument) {
@@ -107,11 +147,26 @@ export class GameService {
         if (!user._id.equals(game.creator._id)) throw new HttpException('You can not cancel another person`s game', HttpStatus.FORBIDDEN)
         if (game.status !== 'active') throw new HttpException('You can cancel only active game', HttpStatus.FORBIDDEN)
 
-        game.status = 'cancelled'
-        await game.save()
-        await this.userService.changeBalance(game.creator, game.amount * (1 + GAME_FEE / 100))
+        const session = await this.connection.startSession()
+        session.startTransaction()
+        game.$session(session)
+        user.$session(session)
 
-        this.gameGateway.gameUpdateNotify(game)
+        try {
+            game.status = 'cancelled'
+            await game.save()
+            await this.userService.changeBalance(user, game.amount * (1 + GAME_FEE / 100))
+
+            await session.commitTransaction()
+            this.gameGateway.gameUpdateNotify(game)
+        } catch (e) {
+            console.log(e)
+            await session.abortTransaction()
+            throw new HttpException('Failed to cancel a game', HttpStatus.FORBIDDEN)
+        } finally {
+            session.endSession()
+        }
+
     }
 
     async findById(userId: Types.ObjectId, options?: { selectCreatorMove: boolean }): Promise<GameDocument | null> {

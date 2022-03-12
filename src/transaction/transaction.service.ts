@@ -37,7 +37,7 @@ export class TransactionService {
         tx.recentBlockhash = (await this.connection.getRecentBlockhash()).blockhash
         tx.sign(this.serviceKeypair)
 
-        const txhash = await this.connection.sendRawTransaction(tx.serialize(), { preflightCommitment: 'confirmed', maxRetries: 5 })
+        await this.connection.sendRawTransaction(tx.serialize(), { preflightCommitment: 'confirmed', maxRetries: 5 })
     }
 
     async getBySignatureFromBlockchain(signature: string): Promise<ParsedConfirmedTransaction> {
