@@ -89,6 +89,8 @@ export class TransactionService {
 
     async processTransactions() {
         try {
+            console.log('processing a transaction!')
+            await new Promise(resolve => setTimeout(() => resolve(1), 1500))
             const blockchainTransactions = await this.getLastFromBlockchain()
 
             await Promise.all(blockchainTransactions.map(transaction => this.processTransaction(transaction)))

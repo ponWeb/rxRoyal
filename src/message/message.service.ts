@@ -21,7 +21,6 @@ export class MessageService {
     async create(user: UserDocument, crateMessageDto: CreateMessageDto) {
         const { content } = crateMessageDto
 
-        console.log(user.lastMessageAt)
         if (Date.now() - user.lastMessageAt < 3000) throw new HttpException('You can write messages every 3 seconds', HttpStatus.FORBIDDEN)
 
         const newMessage = new this.messageModel({ content, creator: user })
