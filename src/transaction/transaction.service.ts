@@ -19,7 +19,7 @@ export class TransactionService {
             'confirmed'
         );
         this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))
-        this.connection.onAccountChange(this.serviceKeypair.publicKey, () => this.processTransactions())
+        this.connection.onAccountChange(this.serviceKeypair.publicKey, () => this.processTransactions(), 'finalized')
     }
 
     async sendLamportsFromServer(receiverPublicKey: string, amount: number) {
@@ -82,7 +82,7 @@ export class TransactionService {
     }
 
     async getLastFromBlockchain(): Promise<ConfirmedSignatureInfo[]> {
-        const transactions = await this.connection.getSignaturesForAddress(this.serviceKeypair.publicKey, { limit: 10 })
+        const transactions = await this.connection.getSignaturesForAddress(this.serviceKeypair.publicKey, { limit: 10 }, 'finalized')
 
         return transactions
     }
