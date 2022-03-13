@@ -107,7 +107,7 @@ export class TransactionService {
             const txType = this.getType(txInfo)
 
             if (txType === 'deposit') {
-                this.confirmPendingDeposit(tx.signature, txInfo)
+                await this.confirmPendingDeposit(tx.signature, txInfo)
             }
         } catch (e) {
             Logger.error(e)
