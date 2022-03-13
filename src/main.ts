@@ -10,7 +10,9 @@ import sslRedirect from 'heroku-ssl-redirect'
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error']
+  });
 
   const config = app.get(ConfigService)
 

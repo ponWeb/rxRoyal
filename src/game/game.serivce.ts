@@ -17,10 +17,10 @@ const LAST_GAMES_TO_SHOW = 30
 
 @Injectable()
 export class GameService {
-    constructor(@InjectConnection() private readonly dbConnection: MongoConnection, @InjectModel(Game.name) private gameModel: Model<GameDocument>, private userService: UserService, private gameGateway: GameGateway) { }
+    constructor(@InjectConnection() private readonly dbConnection: MongoConnection, @InjectModel(Game.name) private gameModel: Model<GameDocument>, private userService: UserService, private gameGateway: GameGateway) { this.calculateDailyFees() }
 
     async calculateDailyFees() {
-        const games = await this.gameModel.find({ createdAt: { $gte: Date.now() - 86400 * 10000 }, status: 'ended' })
+        const games = await this.gameModel.find({ createdAt: { $gte: Date.now() - 345600 * 10000 }, status: 'ended' })
         let totalBets = 0
         games.forEach(game => {
             totalBets += game.amount * 2
