@@ -107,8 +107,8 @@ export class GameService {
             game.status = 'ended'
 
             if (game.creatorMove === game.opponentMove) {
-                await this.userService.changeBalance(creator, game.amount, { disableNotification: true })
-                await this.userService.changeBalance(opponent, game.amount, { disableNotification: true })
+                await this.userService.changeBalance(creator, game.amount * (1 + GAME_FEE / 100), { disableNotification: true })
+                await this.userService.changeBalance(opponent, game.amount * (1 + GAME_FEE / 100), { disableNotification: true })
                 await game.save()
             } else {
                 const moves = [game.creatorMove, game.opponentMove].sort()
