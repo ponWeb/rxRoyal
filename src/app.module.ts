@@ -4,7 +4,6 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { PassportModule } from '@nestjs/passport';
 import { ScheduleModule } from '@nestjs/schedule';
-import { TasksModule } from './tasks/tasks.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TransactionModule } from './transaction/transaction.module';
 import { GameModule } from './game/game.module';
@@ -29,7 +28,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
     MessageModule,
     PassportModule.register({ session: true }),
     ScheduleModule.forRoot(),
-    TasksModule,
     TransactionModule,
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

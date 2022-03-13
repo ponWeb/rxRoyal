@@ -4,7 +4,7 @@ import passport from 'passport'
 import session from 'express-session'
 import connectRedis from 'connect-redis';
 import Redis from 'ioredis';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet'
 import sslRedirect from 'heroku-ssl-redirect'
 import { ConfigService } from '@nestjs/config';
@@ -56,6 +56,6 @@ async function bootstrap() {
   app.use(passport.initialize())
   app.use(passport.session())
 
-  await app.listen(PORT);
+  await app.listen(PORT, () => console.log('🎉 APP HAS STARTED'));
 }
 bootstrap();

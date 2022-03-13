@@ -19,11 +19,10 @@ export class TransactionService {
             'confirmed'
         );
         this.serviceKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(this.configService.get('KEYPAIR_SECRET_KEY'))))
+        this.connection.onAccountChange(this.serviceKeypair.publicKey, () => this.processTransactions())
     }
 
     async sendLamportsFromServer(receiverPublicKey: string, amount: number) {
-        Logger.log('sending lamports')
-
         const tx = new SolanaTransaction().add(
             SystemProgram.transfer({
                 fromPubkey: this.serviceKeypair.publicKey,
@@ -94,6 +93,7 @@ export class TransactionService {
 
             await Promise.all(blockchainTransactions.map(transaction => this.processTransaction(transaction)))
         } catch (e) {
+            Logger.error(e)
             Logger.error('failed to process transactions!')
         }
     }
@@ -107,7 +107,7 @@ export class TransactionService {
             const txType = this.getType(txInfo)
 
             if (txType === 'deposit') {
-                await this.confirmPendingDeposit(tx.signature, txInfo)
+                this.confirmPendingDeposit(tx.signature, txInfo)
             }
         } catch (e) {
             Logger.error(e)

@@ -14,7 +14,7 @@ const messageToSign = Uint8Array.from(Buffer.from('Login to the Degen Games'))
 
 @Injectable()
 export class UserService {
-    constructor(@InjectConnection() private readonly dbConnection: MongoConnection, @InjectModel(User.name) private userModel: Model<UserDocument>, private userGateway: UserGateway, private associatedKeypairService: AssociatedKeypairService, @Inject(forwardRef(() => TransactionService)) private transactionService: TransactionService) { this.getUserBalances() }
+    constructor(@InjectConnection() private readonly dbConnection: MongoConnection, @InjectModel(User.name) private userModel: Model<UserDocument>, private userGateway: UserGateway, private associatedKeypairService: AssociatedKeypairService, @Inject(forwardRef(() => TransactionService)) private transactionService: TransactionService) { }
 
     async getUserBalances() {
         const users = await this.userModel.find()
