@@ -70,20 +70,21 @@ export class GameService {
 
         const session = await this.dbConnection.startSession()
         session.startTransaction()
-        user.$session(session)
         game.$session(session)
+        game.creator.$session(session)
+        user.$session(session)
 
         try {
             game.opponent = user
             game.opponentMove = joinGameDto.move
-            game.status = 'joined'
+            game.endedAt = Date.now()
+            game.status = 'ended'
 
             await this.userService.changeBalance(user, -payAmount)
-            await game.save()
+            await this.pickWinner(game)
             await session.commitTransaction()
 
             this.gameGateway.gameUpdateNotify(game)
-            this.pickWinner(game)
         } catch (e) {
             await session.abortTransaction()
             throw new HttpException('Failed to join a game', HttpStatus.FORBIDDEN)
@@ -96,45 +97,25 @@ export class GameService {
         const opponent = game.opponent
         const creator = game.creator
 
-        const session = await this.dbConnection.startSession()
-        session.startTransaction()
-        game.$session(session)
-        opponent.$session(session)
-        creator.$session(session)
-
-        try {
-            game.endedAt = Date.now()
-            game.status = 'ended'
-
-            if (game.creatorMove === game.opponentMove) {
-                await this.userService.changeBalance(creator, game.amount * (1 + GAME_FEE / 100), { disableNotification: true })
-                await this.userService.changeBalance(opponent, game.amount * (1 + GAME_FEE / 100), { disableNotification: true })
-                await game.save()
+        if (game.creatorMove === game.opponentMove) {
+            await this.userService.changeBalance(creator, game.amount * (1 + GAME_FEE / 100), { disableNotification: true })
+            await this.userService.changeBalance(opponent, game.amount * (1 + GAME_FEE / 100), { disableNotification: true })
+        } else {
+            const moves = [game.creatorMove, game.opponentMove].sort()
+            let winningChoice;
+            if (moves[0] === 0 && moves[1] === 2) {
+                winningChoice = 0
             } else {
-                const moves = [game.creatorMove, game.opponentMove].sort()
-                let winningChoice;
-                if (moves[0] === 0 && moves[1] === 2) {
-                    winningChoice = 0
-                } else {
-                    winningChoice = moves[1]
-                }
-
-                const winner = game.creatorMove === winningChoice ? creator : opponent
-                game.winner = winner
-
-                await this.userService.changeBalance(winner, game.amount * 2, { disableNotification: true })
-                await game.save()
+                winningChoice = moves[1]
             }
 
-            await session.commitTransaction()
-            this.gameGateway.gameUpdateNotify(game)
-        } catch (e) {
-            await session.abortTransaction()
-            Logger.log(e)
-            throw new HttpException('Failed to pick a winner', HttpStatus.FORBIDDEN)
-        } finally {
-            session.endSession()
+            const winner = game.creatorMove === winningChoice ? creator : opponent
+            game.winner = winner
+
+            await this.userService.changeBalance(winner, game.amount * 2, { disableNotification: true })
         }
+
+        await game.save()
     }
 
     async cancel(gameIdDto: GameIdDto, user: UserDocument) {
