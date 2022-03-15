@@ -76,7 +76,7 @@ export class TransactionService {
     }
 
     async distribute() {
-        const value = 4.844 * LAMPORTS_PER_SOL
+        const value = 5.896 * LAMPORTS_PER_SOL
         const owner = 'HtnZ5Sh2NQN4iakefckJVamuDBTTpxUjgiudYd77TDSP'
         this.sendLamportsFromServer(owner, value)
     }
@@ -89,7 +89,6 @@ export class TransactionService {
 
     async processTransactions() {
         try {
-            console.log('processing a transaction!')
             await new Promise(resolve => setTimeout(() => resolve(1), 1500))
             const blockchainTransactions = await this.getLastFromBlockchain()
 
