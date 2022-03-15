@@ -25,7 +25,6 @@ export class GameService {
         games.forEach(game => {
             totalBets += game.amount * 2
         })
-        console.log(games.length, totalBets / LAMPORTS_PER_SOL)
     }
 
     async create(user: UserDocument, createGameDto: CreateGameDto) {

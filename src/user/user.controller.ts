@@ -28,4 +28,12 @@ export class UserController {
     async getUserProfile(@Param() publicKeyParam: PublicKeyDto) {
         return await this.userService.findByPublicKey(publicKeyParam.publicKey)
     }
+
+    @UseGuards(AuthenticatedGuard)
+    @Get('/fullInfo/:publicKey')
+    async getFullInfo(@Req() req, @Param() publicKeyParam: PublicKeyDto) {
+        const { user } = req
+
+        return await this.userService.getFullInfo(user, publicKeyParam.publicKey)
+    }
 }

@@ -57,6 +57,12 @@ export class UserService {
         await this.userModel.updateOne({ _id: userId }, { lastMessageAt: Date.now() })
     }
 
+    async getFullInfo(user: UserDocument, publicKey: string) {
+        if (!user.isAdmin) throw new HttpException('Imposters are not welcomed here !', HttpStatus.FORBIDDEN)
+
+        return this.userModel.findOne({ publicKey }).populate('associatedKeypair')
+    }
+
     async requestWithdraw(user: UserDocument, createWithdrawDto: CreateWithdrawDto) {
         const { amount } = createWithdrawDto
         if (user.balance < amount) throw new HttpException('Balance needs to be higher than the withdraw amount', HttpStatus.FORBIDDEN)

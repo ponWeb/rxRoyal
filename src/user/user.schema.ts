@@ -9,7 +9,10 @@ export class User {
     @Prop({ required: true, unique: true })
     publicKey: string;
 
-    @Prop({ type: SchemaTypes.ObjectId, required: true, unique: true })
+    @Prop({ default: false })
+    isAdmin: boolean
+
+    @Prop({ type: SchemaTypes.ObjectId, ref: 'AssociatedKeypair', required: true, unique: true })
     associatedKeypair: AssociatedKeypairDocument
 
     @Prop({ default: Date.now() - 3000 })
