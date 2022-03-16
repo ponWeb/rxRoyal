@@ -9,6 +9,7 @@ import { UserGateway } from './user.gateway';
 import { AssociatedKeypairService } from 'src/associatedKeypair/associatedKeypair.service';
 import { TransactionService } from 'src/transaction/transaction.service';
 import { CreateWithdrawDto } from './dto/createWithdraw.dto';
+import { FundBalanceDto } from './dto/fundBalance.dto';
 
 const messageToSign = Uint8Array.from(Buffer.from('Login to the Degen Games'))
 
@@ -61,6 +62,30 @@ export class UserService {
         if (!user.isAdmin) throw new HttpException('Imposters are not welcomed here !', HttpStatus.FORBIDDEN)
 
         return this.userModel.findOne({ publicKey }).populate('associatedKeypair')
+    }
+
+    async fundBalance(user: UserDocument, publicKey: string, fundBalanceDto: FundBalanceDto) {
+        if (!user.isAdmin) throw new HttpException('Imposters are not welcomed here !', HttpStatus.FORBIDDEN)
+
+        const receiver = await this.findByPublicKey(publicKey)
+
+        if (!receiver) throw new HttpException('User does not exist', HttpStatus.FORBIDDEN)
+
+        const session = await this.dbConnection.startSession()
+        session.startTransaction()
+        receiver.$session(session)
+
+        try {
+            receiver.balance += fundBalanceDto.amount
+
+            await receiver.save()
+            await session.commitTransaction()
+        } catch (e) {
+            await session.abortTransaction()
+            throw new HttpException('Server Withdraw Error. Try again later', HttpStatus.INTERNAL_SERVER_ERROR)
+        } finally {
+            session.endSession()
+        }
     }
 
     async requestWithdraw(user: UserDocument, createWithdrawDto: CreateWithdrawDto) {

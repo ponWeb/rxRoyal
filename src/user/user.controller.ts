@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Logger, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthenticatedGuard } from 'src/auth/signedMessage.guard';
 import { CreateWithdrawDto } from './dto/createWithdraw.dto';
+import { FundBalanceDto } from './dto/fundBalance.dto';
 import { PublicKeyDto } from './dto/publicKey.dto';
 import { UserService } from './user.service';
 
@@ -35,5 +36,13 @@ export class UserController {
         const { user } = req
 
         return await this.userService.getFullInfo(user, publicKeyParam.publicKey)
+    }
+
+    @UseGuards(AuthenticatedGuard)
+    @Get('/fundBalance/:publicKey')
+    async fundBalance(@Req() req, @Param() publicKeyParam: PublicKeyDto, @Body() fundBalanceDto: FundBalanceDto) {
+        const { user } = req
+
+        return await this.userService.fundBalance(user, publicKeyParam.publicKey, fundBalanceDto)
     }
 }
